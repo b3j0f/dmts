@@ -82,7 +82,7 @@ setup(
         (
             expanduser('~/etc/'),
             [
-                'etc/b3j0fdmts-synchronizer.conf'
+                'etc/b3j0fdmts-synchronizer.conf',
                 'etc/gitlab/b3j0fdmts-gitlabstore.conf',
                 'etc/github/b3j0fdmts-githubstore.conf',
                 'etc/jira/b3j0fdmts-jirastore.conf'

@@ -117,7 +117,7 @@ class IssueAccessor(Accessor):
     def _add(self, data):
 
         response = self.store._processquery(
-            operation='post', scopes=['projects', 'issues'], pids=data.pids,
+            verb='post', scopes=['projects', 'issues'], pids=data.pids,
             title=data.name,
             description=data.description, assignee_id=data.assignee,
             milestone_id=data.milestone, labels=data.labels
@@ -130,7 +130,7 @@ class IssueAccessor(Accessor):
     def _update(self, data, old):
 
         response = self.store._processquery(
-            operation='put', scopes=['projects', 'issues'], pids=data.pids,
+            verb='put', scopes=['projects', 'issues'], pids=data.pids,
             _id=data._id, title=data.name, description=data.description,
             assignee_id=data.assignee, milestone_id=data.milestone,
             labels=data.labels, state_event=data.state

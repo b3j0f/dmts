@@ -86,7 +86,7 @@ class LabelAccessor(Accessor):
     def _add(self, data):
 
         response = self.store._processquery(
-            operation='post', scopes=['projects', 'labels'], pids=data.pids,
+            verb='post', scopes=['projects', 'labels'], pids=data.pids,
             name=data.name, color=data.color
         )
 
@@ -97,7 +97,7 @@ class LabelAccessor(Accessor):
     def _update(self, data, old):
 
         response = self.store._processquery(
-            operation='put', scopes=['projects', 'labels'], pids=data.pids,
+            verb='put', scopes=['projects', 'labels'], pids=data.pids,
             name=data.name, color=data.color, new_name=old.name
         )
 
@@ -108,7 +108,7 @@ class LabelAccessor(Accessor):
     def _remove(self, data):
 
         self._processquery(
-            operation='delete', scopes=['projects', 'labels'], pids=data.pids,
+            verb='delete', scopes=['projects', 'labels'], pids=data.pids,
             name=data.name,
         )
 

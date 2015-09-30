@@ -26,21 +26,16 @@
 
 """Gitlab store module in charge of storing data."""
 
-from b3j0f.conf import Configurable, conf_paths, add_category
-from b3j0f.dmts.rest.store import RESTStore
-from b3j0f.dmts.model import (
-    Account, Label, Milestone, Project, Issue, Comment, Attachment, Group,
-    Member
-)
+from b3j0f.utils.iterable import ensureiterable
+from b3j0f.conf import conf_paths, add_category
+from b3j0f.dmts.http.store import HTTPStore
 
 import requests
-
-from gitlab import Gitlab
 
 
 @conf_paths('b3j0fdmts-gitlabstore.conf')
 @add_category('GITLABSTORE')
-class GitLabStore(RESTStore):
+class GitLabStore(HTTPStore):
     """Gitlab store."""
 
     def currentaccount(self):
@@ -54,14 +49,14 @@ class GitLabStore(RESTStore):
 
     def connect(self):
 
-        currentaccount()  # raise an error if it is impossible to run
+        self.currentaccount()  # raise an error if it is impossible to run
 
     def _isconnected(self):
 
         result = False
 
         try:
-            currentaccount()
+            self.currentaccount()
 
         except GitLabStore.Error:
             pass
@@ -122,10 +117,8 @@ class GitLabStore(RESTStore):
                 sessionparams['email'] = self.email
             sessionparams['password'] = self.pwd
 
-            response = self._processquery(
-                operation='post', scopes='session', **kwargs
-            )
-            self.token = params['private_token']  # set private token
+            response = self._processquery(verb='post', scopes='session')
+            self.token = response['private_token']  # set private token
             params['private_token'] = self.token  # use private token
 
         if params:  # add '?' for url parameters
@@ -140,11 +133,11 @@ class GitLabStore(RESTStore):
         return result
 
     def _processquery(
-            self, operation='get', scopes, _id=None, pids=None, **params
+            self, scopes, verb='get', _id=None, pids=None, **params
     ):
         """Process an http function.
 
-        :param str operation: rest operation name. Default 'get'.
+        :param str verb: rest verb name. Default 'get'.
         :param str(s) scopes: scope names. For example, an issue uses
             ['projects', 'issues'].
         :param int _id: data id.
@@ -154,9 +147,7 @@ class GitLabStore(RESTStore):
 
         query = self._query(scopes=scopes, _id=_id, pids=pids, **params)
 
-        procparams = {'url': query}
-
-        request = requests[operation](query)
+        request = requests[verb](query)
 
         if request.status_code not in [200, 201]:
             raise GitLabStore.Error(
@@ -167,273 +158,3 @@ class GitLabStore(RESTStore):
 
         else:
             return request.json()
-
-    def get(self, _id, pids=None):
-
-        result = None
-
-        if issubclass(_type, Account):
-            account = self.conn.getuser(user_id=_id)
-            result = Account(**account)
-
-        elif issubclass(_type, Label):
-
-
-        elif issubclass(_type, Project):
-            project = self.conn.getproject(project_id=_id)
-            result = Project(**project)
-
-        elif issubclass(_type, Group):
-            group = self.conn.getgroups(project_id=_id)
-            result = Group(**group)
-
-        elif issubclass(_type, Comment):
-            projects = self.conn.getprojects()
-            if projects:
-                for project in projects:
-                    comment = self.conn.getissuewallnote(
-                        project_id=project['id'],
-                        issue_id=pid, note_id=_id
-                    )
-                    if comment:
-                        result = comment
-                        break
-
-        elif issubclass(_type, Milestone):
-            milestone = self.conn.getmilestone(
-                project_id=pid, milestone_id=_id
-            )
-            result = Milestone(**milestone)
-
-        else:
-            raise self.Error('Wrong type {0}.'.format(_type))
-
-        return result
-
-    def find(
-            self, names=None, descs=None, created=None, updated=None, **kwargs
-    ):
-
-        result = []
-
-        if _type is None:
-            _type = (
-                Account, Label, Milestone, Project, Issue, Comment, Group,
-                Member
-            )
-
-        for typ in _type:
-
-            if issubclass(typ, Label):
-                projects = self.conn.getprojects()
-                if projects:
-                    for project in projects:
-                        labels = self.conn.getlabels(project_id=project['id'])
-                        if labels:
-                            for label in labels:
-                                lab = Label(**label)
-                                result.append(lab)
-
-            if issubclass(typ, Project):
-                projects = self.conn.getprojects()
-                if projects:
-                    for gitlabproject in projects:
-                        project = Project(**gitlabproject)
-                        result.append(project)
-
-            elif issubclass(typ, Issue):
-                issues = self.conn.getissues()
-                if issues:
-                    for issue in issues:
-                        iss = Issue(**issue)
-                        result.append(iss)
-
-            elif issubclass(typ, Account):
-                users = self.conn.getusers()
-                if users:
-                    for user in users:
-                        account = Account(**user)
-                        result.append(account)
-
-            elif issubclass(typ, Group):
-                groups = self.conn.getgroups()
-                if groups:
-                    for group in groups:
-                        gro = Group(**group)
-                        result.append(gro)
-
-            elif issubclass(typ, Member):
-                members = self.conn.getgroupmembers(group_id=data.group)
-                if members:
-                    for member in members:
-                        mem = Member(**member)
-                        result.append(mem)
-
-            elif issubclass(typ, Comment):
-                projects = self.conn.getprojects()
-                if projects:
-                    for project in projects:
-                        issues = self.conn.getissues()
-                        if issues:
-                            for issue in issues:
-                                comments = self.conn.getissuewallnotes(
-                                    project_id=project['id'],
-                                    issue_id=issue['id']
-                                )
-                                for comment in comments:
-                                    com = Comment(**comment)
-                                    result.append(mem)
-
-            elif issubclass(typ, Milestone):
-                projects = self.conn.projects()
-                if projects:
-                    for project in projects:
-                        milestones = self.conn.getmilestones(
-                            project_id=project['id']
-                        )
-                        if milestones:
-                            for milestone in milestones:
-                                mil = Milestone(**milestone)
-                                result.append(mil)
-
-            else:
-                raise JiraStore.Error('Unknown type {0}'.format(typ))
-
-        return result
-
-    def _add(self, data):
-
-        result = data
-
-        if isinstance(data, Project):
-            if not self.conn.createproject(name=data.name, **data):
-                result = None
-
-        elif isinstance(data, Account):
-            if not self.conn.createuser(
-                name=data.name, username=data.fullname,
-                password=data.pwd, email=data.email
-            )
-            result = None
-
-        elif isinstance(data, Milestone):
-            if not self.conn.createmilestone(
-                project_id=data.project, title=data.name, **data
-            ):
-                result = None
-
-        elif isinstance(data, Issue):
-            if not self.conn.createissue(
-                project_id=data.project, title=data.name, **data
-            ):
-                result = None
-
-        elif isinstance(data, Group):
-            if not self.conn.creategroup(name=data.name, **data):
-                result = None
-
-        elif isinstance(data, Member):
-            if not self.conn.addgroupmember(
-                group_id=data.group, user_id=data.account,
-                access_level=data.access_lvl
-            )
-            result = None
-
-        elif isinstance(data, Comment):
-            if not self.conn.createissuewallnote(
-                project_id=data.group, issue_id=data.issue,
-                content=data.content
-            )
-            result = None
-
-        elif isinstance(data, Label):
-            if not self.conn.createlabel(
-                project_id=data.group, name=data.name, color=data.color
-            )
-            result = None
-
-        else:
-            raise self.Error('Wrong type {0}.'.format(data))
-
-        return result
-
-    def _update(self, data, old):
-
-        result = data
-
-        if isinstance(data, Account):
-            if not self.conn.edituser(user_id=data._id, **data):
-                result = None
-
-        elif isinstance(data, Project):
-            if not self.conn.editproject(project_id=data._id, **data):
-                result = None
-
-        elif isinstance(data, Milestone):
-            if not self.conn.editmilestone(
-                project_id=data.project, milestone_id=data._id, **data
-            ):
-                result = None
-
-        elif isinstance(data, Issue):
-            if not self.conn.editissue(
-                project_id=data.project, issue_id=data._id, **data
-            ):
-                result = None
-
-        elif isinstance(data, Group):
-            if old is not None:  # are there members ?
-                newmembers = set(data.accounts)
-                oldmembers = set(old.accounts)
-                memberstoremove = oldmembers - newmembers
-                memberstoadd = newmembers - oldmembers
-
-        elif isinstance(data, Member):
-            if not self.conn.editgroupmember(
-                group_id=data.group, user_id=data.account,
-                access_level=data.access_lvl
-            ):
-                result = None
-
-        elif isinstance(data, Label):
-            if not self.conn.editlabel(
-                project_id=data.project, name=old.name, new_name=data.name,
-                color=data.color
-            ):
-                result = None
-
-        else:
-            raise self.Error('Wrong type {0}'.format(data))
-
-        return result
-
-    def _del(self, data):
-
-        result = data
-
-        if isinstance(data, Account):
-            if not self.conn.deleteuser(user_id=data._id):
-                result = None
-
-        elif isinstance(data, Project):
-            if not self.conn.deleteproject(project_id=data._id):
-                result = None
-
-        elif isinstance(data, Group):
-            if not self.conn.deletegroup(group_id=data._id):
-                result = None
-
-        elif isinstance(data, Member):
-            if not self.conn.deletegroupmember(
-                group_id=data.group, user_id=data.account
-            ):
-                result = None
-
-        elif isinstance(data, Label):
-            if not self.conn.deletelabel(project_id=data.group, name=data.name):
-                result = None
-
-        else:
-            raise self.Error('Wrong type {0}'.format(data))
-
-        return result

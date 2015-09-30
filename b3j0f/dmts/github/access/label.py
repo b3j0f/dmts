@@ -24,32 +24,24 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""GitLab milestone accessor module."""
+"""GitLab label accessor module."""
 
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.milestone import Milestone
+from b3j0f.dmts.model.label import Label
 
 
-class MilestoneAccessor(Accessor):
-    """Milestone accessor."""
+class LabelAccessor(Accessor):
+    """Label accessor."""
 
-    __datatype__ = Milestone
+    __datatype__ = Label
 
     def _responsetoproject(self, response):
-        """Convert a response to a milestone."""
+        """Convert a response to a label."""
 
         result = self.create(
-            # milestones fields
-            duedate=response['duedate'],  # TODO; convert to datetime
-            state=response['state'],
-            project=self.store.get(
-                accessor='projects', _id=response['project_id']
-            ),
-            _id=response['id'],  # Data fields
-            name=response['title'],
-            description=response['description'],
-            created=response['created_at'],
-            updated=response.get('updated_at')
+            color=response['color'],  # label fields
+            _id=response['name'],  # Data fields
+            name=response['name'],  # element fields
         )
 
         return result
@@ -57,7 +49,7 @@ class MilestoneAccessor(Accessor):
     def get(self, _id, pids=None, globalid=None):
 
         response = self.store._processquery(
-            scopes=['projects', 'milestones'], _id=_id, pids=pids
+            scopes=['projects', 'labels'], _id=_id, pids=pids
         )
 
         result = self._responsetoproject(response=response)
@@ -77,15 +69,15 @@ class MilestoneAccessor(Accessor):
 
         if pids:
             response = self._processquery(
-                scopes=['projects', 'milestones'], pids=pids
+                scopes=['projects', 'labels'], pids=pids
             )
             result = map(self._responsetoproject, response)
 
         else:
             projects = self._processquery(scopes='projects')
             for project in projects:
-                milestones = self.find(pids=project['id'], name=name, **kwargs)
-                result += milestones
+                labels = self.find(pids=project['id'], name=name, **kwargs)
+                result += labels
 
         # TODO: check kwargs
 
@@ -94,9 +86,8 @@ class MilestoneAccessor(Accessor):
     def _add(self, data):
 
         response = self.store._processquery(
-            operation='post', scopes=['projects', 'milestones'],
-            pids=data.pids, title=data.name, description=data.description,
-            due_date=data.duedate
+            verb='post', scopes=['projects', 'labels'], pids=data.pids,
+            name=data.name, color=data.color
         )
 
         result = self._responsetoproject(response)
@@ -106,11 +97,19 @@ class MilestoneAccessor(Accessor):
     def _update(self, data, old):
 
         response = self.store._processquery(
-            operation='put', scopes=['projects', 'milestones'], _id=data._id,
-            pids=data.pids, title=data.name, description=data.description,
-            due_date=data.duedate, state_event=data.state
+            verb='put', scopes=['projects', 'labels'], pids=data.pids,
+            name=data.name, color=data.color, new_name=old.name
         )
 
         result = self._responsetoproject(response=response)
 
         return result
+
+    def _remove(self, data):
+
+        self._processquery(
+            verb='delete', scopes=['projects', 'labels'], pids=data.pids,
+            name=data.name,
+        )
+
+        return data

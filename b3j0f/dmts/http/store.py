@@ -29,8 +29,8 @@
 from b3j0f.sync import Store
 
 
-class RESTStore(Store):
-    """Remote Procedure Call store."""
+class HTTPStore(Store):
+    """HTTP store."""
 
     def __init__(
             self,
@@ -46,7 +46,7 @@ class RESTStore(Store):
         :param str oauth: oauth connection.
         """
 
-        super(RESTStore, self).__init__(*args, **kwargs)
+        super(HTTPStore, self).__init__(*args, **kwargs)
 
         # set attributes
         self.url = url

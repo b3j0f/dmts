@@ -28,9 +28,9 @@
 
 __all__ = [
     '__version_info__', '__version__',
-    'Project', 'Account', 'Issue', 'Label', 'Milestone', 'Group', 'Comment',
-    'Attachment',
-    'RpcStore', 'JiraStore', 'GitHubStore', 'GitLabStore'
+    'DMTSSynchronizer',
+    'Account', 'Label', 'Milestone', 'Project', 'Issue', 'Comment', 'Group',
+    'HTTPStore', 'JiraStore', 'GitHubStore', 'GitLabStore'
 ]
 
 #: project version info
@@ -38,10 +38,11 @@ __version_info__ = 0, 0, 1, "alpha", 0
 #: project version
 __version__ = ".".join(str(v) for v in __version_info__[:3])
 
+from b3j0f.dmts.core import DMTSSynchronizer
 from b3j0f.dmts.model import (
-    Account, Label, Milestone, Project, Issue, Comment, Attachment, Group
+    Account, Label, Milestone, Project, Issue, Comment, Group
 )
-from b3j0f.dmts.rpc import RpcStore
-from b3j0f.dmts.jira import JiraStore
-from b3j0f.dmts.gitlab import GitLabStore
-from b3j0f.dmts.github import GitHubStore
+from b3j0f.dmts.http.store import HTTPStore
+from b3j0f.dmts.jira.store import JiraStore
+from b3j0f.dmts.gitlab.store import GitLabStore
+from b3j0f.dmts.github.store import GitHubStore

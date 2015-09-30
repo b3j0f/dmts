@@ -24,37 +24,32 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""GitLab account accessor module."""
+"""GitLab group accessor module."""
 
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.account import Account
+from b3j0f.dmts.model.group import Group
 
 
-class AccountAccessor(Accessor):
-    """Account accessor."""
+class GroupAccessor(Accessor):
+    """Group accessor."""
 
-    __datatype__ = Account
+    __datatype__ = Group
 
     def _responsetodata(self, response):
-        """Convert a response to a account."""
+        """Convert a response to a group."""
 
         result = self.create(
-            email=response['email'],  # account fields
-            fullname=response['name'],
-            avatar=response['avatar_url'],
-            state=response['state'],
-            _id=response['id'],  # Data fields
-            name=response['username'],  # element fields
-            # TODO: format to a datetime
-            created=response['created_at'],
-            updated=response.get('current_sign_in_at')
+            path=response['path'],  # group fields
+            _id=response['name'],  # Data fields
+            name=response['name'],
+            description=response['description']
         )
 
         return result
 
     def get(self, _id, pids=None, globalid=None):
 
-        response = self.store._processquery(scopes='users', _id=_id)
+        response = self.store._processquery(scopes='groups', _id=_id)
 
         result = self._responsetodata(response=response)
 
@@ -62,58 +57,43 @@ class AccountAccessor(Accessor):
 
     def getbyname(self, name, pnames=None, globalname=None):
 
-        result = None
+        return self.get(_id=name, pids=pnames, globalid=globalname)
 
-        response = self.store._processquery(scopes='users')
+    def find(self, name=None, **kwargs):
 
-        for resp in response:
-            if resp['username'] == name:
-                result = self._responsetodata(resp)
+        if name:
+            response = self._processquery(scopes='groups', search=name)
 
-        return result
+        else:
 
-    def find(self, **kwargs):
+            response = self._processquery(scopes='groups')
 
-        response = self.store._processquery(scopes='users')
+        result = []
 
-        accounts = []
         for resp in response:
             for key in kwargs:
                 value = kwargs[key]
                 if value is not None and resp.get(key) == value:
-                    accounts.append(resp)
-            result = map(self._responsetodata, accounts)
+                    group = self._responsetodata(resp)
+                    result.append(group)
 
         return result
 
     def _add(self, data):
 
         response = self.store._processquery(
-            operation='post', scopes='users', email=data.email,
-            password=data.pwd, username=data.name, name=data.fullname,
+            verb='post', scopes='groups', name=data.name,
+            description=data.description, path=data.path
         )
 
         result = self._responsetodata(response)
-
-        return result
-
-    def _update(self, data, old):
-
-        response = self.store._processquery(
-            operation='put', scopes='users', email=data.email,
-            password=data.pwd, username=data.name, name=data.fullname,
-        )
-
-        result = self._responsetodata(response=response)
 
         return result
 
     def _remove(self, data):
 
-        response = self._processquery(
-            operation='delete', scopes='users', _id=data._id
+        self._processquery(
+            verb='delete', scopes='groups', _id=data._id
         )
 
-        result = self._responsetodata(response)
-
-        return result
+        return data

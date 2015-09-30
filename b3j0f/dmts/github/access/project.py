@@ -24,85 +24,86 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""GitLab comment accessor module."""
+"""GitLab project accessor module."""
 
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.comment import Comment
+from b3j0f.dmts.model.project import Project
 
 
-class CommentAccessor(Accessor):
-    """Comment accessor."""
+class ProjectAccessor(Accessor):
+    """Project accessor."""
 
-    __datatype__ = Comment
+    __datatype__ = Project
 
     def _responsetodata(self, response):
-        """Convert a response to a comment."""
+        """Convert a response to a project."""
 
         result = self.create(
-            project=self.store.get(  # comment fields
-                accessor='projects', _id=response['project_id']
-            ),
-            issue=self.store.get(
-                accessor='issues', _id=response['issue_id']
-            ),
-            content=response['body'],
-            attachment=response['attachment'],
-            owner=self.store.get(  # element fields
-                accessor='accounts', _id=response['author']['id']
-            ),
+            avatar=response['avatar_url'],  # project fields
+            public=response['public'],
+            state=response['state'],
+            url=response['web_url'],  # item fields
+            owner=response['owner']['username'],
+            archived=response['archived'],
+            tags=response['tag_list'],
             _id=response['id'],  # Data fields
+            name=response['name'],  # element fields
+            description=response['description'],
             created=response['created_at'],  # TODO: format to a datetime
             updated=response.get('updated_at')  # TODO: format to a datetime
         )
 
         return result
 
-    def get(self, _id, pids, globalid=None):
+    def get(self, _id, pids=None, globalid=None):
 
-        response = self.store._processquery(
-            scopes=['projects', 'issues', 'notes'], _id=_id, pids=pids
-        )
+        response = self.store._processquery(scopes='projects', _id=_id)
 
         result = self._responsetodata(response=response)
 
         return result
 
-    def find(self, pids=None, **kwargs):
+    def getbyname(self, name, pnames=None, globalname=None):
 
-        result = []
+        response = self.store._processquery(
+            scopes='projects/search', _id=name
+        )
 
-        if pids is None:
-            projects = self._processquery(scopes='projects')
-            for project in projects:
-                issues = self._processquery(
-                    scopes=['projects', 'issues'], pids=project['id']
-                )
-                comments = self.find(pids=project['id'], **kwargs)
-                result += comments
-
-        elif len(pids) == 1:
-            issues = self._processquery(
-                scopes=['projects', 'issues'], pids=pids[0]
-            )
-            for issue in issues:
-                comments = self.find(pids=[pids[0], issue['id']], **kwargs)
-                result += comments
+        if response:
+            result = self._responsetodata(response=response[0])
 
         else:
-            comments = self._processquery(
-                scopes=['projects', 'issues', 'notes'], pids=pids
-            )
-            result = map(self._responsetodata, result)
+            result = None
 
-        # TODO : check kwargs
+        return result
+
+    def find(self, name=None, **kwargs):
+
+        if name:
+            response = self.store._processquery(
+                scopes='projects', _id=kwargs['name']
+            )
+
+        else:
+            response = self.store._processquery(
+                scopes='projects', search=kwargs
+            )
+
+        result = map(self._responsetodata, response)
 
         return result
 
     def _add(self, data):
 
+        if data.owner is None:
+            scopes = 'projects'
+
+        else:
+            scopes = 'projects/user/{0}'.format(data.owner)
+
         response = self.store._processquery(
-            operation='post', scopes=['projects', 'issues', 'notes'],
-            pids=data.pids, body=data.content
+            verb='post', scopes=scopes, name=data.name,
+            description=data.description, public=data.public
         )
 
         result = self._responsetodata(response)
@@ -112,10 +113,18 @@ class CommentAccessor(Accessor):
     def _update(self, data, old):
 
         response = self.store._processquery(
-            operation='put', scopes=['projects', 'issues', 'notes'],
-            pids=data.pids, _id=data._id, body=data.content
+            verb='put', scopes='projects', _id=data._id,
+            name=data.name, description=data.description, public=data.public
         )
 
-        result = self.store._responsetodata(response=response)
+        result = self._responsetodata(response=response)
 
         return result
+
+    def _remove(self, data):
+
+        self._processquery(
+            verb='delete', scopes='projects', _id=data._id
+        )
+
+        return data

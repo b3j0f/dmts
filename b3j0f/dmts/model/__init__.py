@@ -24,14 +24,17 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""item package."""
+"""model package."""
 
 __all__ = [
-    'Account', 'Label', 'Milestone', 'Project', 'Issue', 'Item'
+    'Account', 'Label', 'Milestone', 'Project', 'Issue', 'Comment', 'Group'
 ]
 
 
 from b3j0f.dmts.model.account import Account
 from b3j0f.dmts.model.label import Label
 from b3j0f.dmts.model.milestone import Milestone
-from b3j0f.dmts.model.item import Project, Issue, Item
+from b3j0f.dmts.model.project import Project
+from b3j0f.dmts.model.issue import Issue
+from b3j0f.dmts.model.comment import Comment
+from b3j0f.dmts.model.group import Group

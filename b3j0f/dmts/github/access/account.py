@@ -24,40 +24,37 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""GitLab project accessor module."""
+"""GitLab account accessor module."""
 
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.project import Project
+from b3j0f.dmts.model.account import Account
 
 
-class ProjectAccessor(Accessor):
-    """Project accessor."""
+class AccountAccessor(Accessor):
+    """Account accessor."""
 
-    __datatype__ = Project
+    __datatype__ = Account
 
     def _responsetodata(self, response):
-        """Convert a response to a project."""
+        """Convert a response to a account."""
 
         result = self.create(
-            avatar=response['avatar_url'],  # project fields
-            public=response['public'],
+            email=response['email'],  # account fields
+            fullname=response['name'],
+            avatar=response['avatar_url'],
             state=response['state'],
-            url=response['web_url'],  # item fields
-            owner=response['owner']['username'],
-            archived=response['archived'],
-            tags=response['tag_list'],
             _id=response['id'],  # Data fields
-            name=response['name'],  # element fields
-            description=response['description'],
-            created=response['created_at'],  # TODO: format to a datetime
-            updated=response.get('updated_at')  # TODO: format to a datetime
+            name=response['username'],  # element fields
+            # TODO: format to a datetime
+            created=response['created_at'],
+            updated=response.get('current_sign_in_at')
         )
 
         return result
 
     def get(self, _id, pids=None, globalid=None):
 
-        response = self.store._processquery(scopes='projects', _id=_id)
+        response = self.store._processquery(scopes='users', _id=_id)
 
         result = self._responsetodata(response=response)
 
@@ -65,45 +62,35 @@ class ProjectAccessor(Accessor):
 
     def getbyname(self, name, pnames=None, globalname=None):
 
-        response = self.store._processquery(
-            scopes='projects/search', _id=name
-        )
+        result = None
 
-        if response:
-            result = self._responsetodata(response=response[0])
+        response = self.store._processquery(scopes='users')
 
-        else:
-            result = None
+        for resp in response:
+            if resp['username'] == name:
+                result = self._responsetodata(resp)
 
         return result
 
-    def find(self, name=None, **kwargs):
+    def find(self, **kwargs):
 
-        if name:
-            response = self.store._processquery(
-                scopes='projects', _id=kwargs['name']
-            )
+        response = self.store._processquery(scopes='users')
 
-        else:
-            response = self.store._processquery(
-                scopes='projects', search=kwargs
-            )
-
-        result = map(self._responsetodata, response)
+        accounts = []
+        for resp in response:
+            for key in kwargs:
+                value = kwargs[key]
+                if value is not None and resp.get(key) == value:
+                    accounts.append(resp)
+            result = map(self._responsetodata, accounts)
 
         return result
 
     def _add(self, data):
 
-        if data.owner is None:
-            scopes = 'projects'
-
-        else:
-            scopes = 'projects/user/{0}'.format(data.owner)
-
         response = self.store._processquery(
-            operation='post', scopes=scopes, name=data.name,
-            description=data.description, public=data.public
+            verb='post', scopes='users', email=data.email,
+            password=data.pwd, username=data.name, name=data.fullname,
         )
 
         result = self._responsetodata(response)
@@ -113,8 +100,8 @@ class ProjectAccessor(Accessor):
     def _update(self, data, old):
 
         response = self.store._processquery(
-            operation='put', scopes='projects', _id=data._id,
-            name=data.name, description=data.description, public=data.public
+            verb='put', scopes='users', email=data.email,
+            password=data.pwd, username=data.name, name=data.fullname,
         )
 
         result = self._responsetodata(response=response)
@@ -123,8 +110,10 @@ class ProjectAccessor(Accessor):
 
     def _remove(self, data):
 
-        self._processquery(
-            operation='delete', scopes='projects', _id=data._id
+        response = self._processquery(
+            verb='delete', scopes='users', _id=data._id
         )
 
-        return data
+        result = self._responsetodata(response)
+
+        return result

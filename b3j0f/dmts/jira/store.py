@@ -27,10 +27,10 @@
 """Jira store module in charge of storing data."""
 
 from b3j0f.conf import add_category, conf_paths
-from b3j0f.dmts.rpc.store import RpcStore
+from b3j0f.dmts.http.store import HTTPStore
 
 
 @conf_paths('b3j0fdmts-jirastore.conf')
 @add_category('JIRASTORE')
-class JiraStore(RpcStore):
+class JiraStore(HTTPStore):
     """Jira store."""
