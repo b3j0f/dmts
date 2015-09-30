@@ -26,114 +26,11 @@
 
 """Github store module in charge of storing data."""
 
-from b3j0f.conf import Configurable
+from b3j0f.conf import add_category, conf_paths
 from b3j0f.dmts.rpc.store import RpcStore
 
-from b3j0f.dmts.model import (
-    Account, Label, Milestone, Project, Issue, Comment, Attachment, Group,
-    Member
-)
 
-from github3 import GitHubEnterprise, GitHub
-
-
+@conf_paths('b3j0fdmts-githubstore.conf')
+@add_category('GITHUBSTORE')
 class GitHubStore(RpcStore):
-    """Github store."""
-
-    def __init__(self, repo, *args, **kwargs):
-        """
-        :param str repo: repository name.
-        """
-
-        super(GitHubStore, self).__init__(*args, **kwargs)
-
-        self.repo = repo
-
-    def connect(self):
-        """Connect to the remote element with self attributes."""
-
-        kwargs = {'url': self.url}
-
-        if self.login is not None:
-            kwargs['username'] = self.login
-            kwargs['password'] = self.pwd
-
-        if self.oauth is not None:
-            kwargs['token'] = self.oauth
-
-        self.conn = GitHubEnterprise(**kwargs)
-
-    def get(self, _id, pids=None):
-
-        result = None
-
-        if issubclass(_type, Account):
-
-
-        else:
-            raise self.Error('Wrong type {0}.'.format(_type))
-
-        return result
-
-    def find(
-            self,
-            names=None, descs=None, created=None, updated=None, _type=None,
-            **kwargs
-    ):
-
-        result = []
-
-        if _type is None:
-            _type = (
-                Account, Label, Milestone, Project, Issue, Comment, Group,
-                Member
-            )
-
-        for typ in _type:
-
-            if issubclass(typ, Label):
-
-            else:
-                raise JiraStore.Error('Unknown type {0}'.format(typ))
-
-        return result
-
-    def _addelt(self, elt):
-
-        result = elt
-
-        if isinstance(elt, Issue):
-            self.conn.create_issue(
-                owner=elt.owner, repository=self.repo, title=elt.name,
-                assignee=elt.assignee, body=elt.content,
-                milestone=elt.milestone, labels=elt.labels
-            )
-
-        else:
-            raise self.Error('Wrong type {0}.'.format(elt))
-
-        return result
-
-    def _updateelt(self, elt, old, upsert):
-
-        result = elt
-
-        if isinstance(elt, Account):
-
-
-        else:
-            raise self.Error('Wrong type {0}'.format(elt))
-
-        return result
-
-    def _delelt(self, elt):
-
-        result = elt
-
-        if isinstance(elt, Account):
-
-
-        else:
-            raise self.Error('Wrong type {0}'.format(elt))
-
-        return result
+    """GitHub store."""

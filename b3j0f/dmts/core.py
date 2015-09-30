@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------
 # The MIT License (MIT)
 #
-# Copyright (c) 2014 Jonathan Labéjof <jonathan.labejof@gmail.com>
+# Copyright (c) 2015 Jonathan Labéjof <jonathan.labejof@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,13 +24,13 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""Jira store module in charge of storing data."""
+"""Project module."""
 
 from b3j0f.conf import add_category, conf_paths
-from b3j0f.dmts.rpc.store import RpcStore
+from b3j0f.sync import Synchronizer
 
 
-@conf_paths('b3j0fdmts-jirastore.conf')
-@add_category('JIRASTORE')
-class JiraStore(RpcStore):
-    """Jira store."""
+@conf_paths('b3j0fdmts-synchronizer.conf')
+@add_category('DMTS')
+class DMTSSynchronizer(Synchronizer):
+    """Dedicated to development management tool synchronizer."""

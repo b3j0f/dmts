@@ -40,7 +40,7 @@ from gitlab import Gitlab
 
 @conf_paths('b3j0fdmts-gitlabstore.conf')
 @add_category('GITLABSTORE')
-class GitlabStore(RESTStore):
+class GitLabStore(RESTStore):
     """Gitlab store."""
 
     def currentaccount(self):
@@ -63,7 +63,7 @@ class GitlabStore(RESTStore):
         try:
             currentaccount()
 
-        except GitlabStore.Error:
+        except GitLabStore.Error:
             pass
 
         else:
@@ -159,7 +159,7 @@ class GitlabStore(RESTStore):
         request = requests[operation](query)
 
         if request.status_code not in [200, 201]:
-            raise GitlabStore.Error(
+            raise GitLabStore.Error(
                 'Wrong query {0} ({1} - {2}).'.format(
                     query, request.status_code, request.reason
                 )
