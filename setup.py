@@ -41,11 +41,10 @@ KEYWORDS = [
 ]
 
 DEPENDENCIES = [
-    'b3j0f.sync', 'b3j0f.conf', 'pyapi-gitlab', 'jira', 'github3.py',
-    'requests'
+    'b3j0f.sync', 'b3j0f.conf', 'b3j0f.utils', 'jira', 'github3.py', 'requests'
 ]
 
-DESCRIPTION = 'Set of tools to synchronize issues among development projects'
+DESCRIPTION = 'Set of tools to synchronize development management tools'
 
 setup(
     name='b3j0f.dmts',
