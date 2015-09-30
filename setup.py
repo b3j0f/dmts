@@ -29,7 +29,7 @@
 
 from setuptools import setup, find_packages
 
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, expanduser
 
 # get long description from setup directory abspath
 with open(join(dirname(abspath(__file__)), 'README.rst')) as f:
@@ -77,5 +77,16 @@ setup(
         "Programming Language :: Python :: 3.4"
     ],
     test_suite='b3j0f',
-    keywords=KEYWORDS
+    keywords=KEYWORDS,
+    data_files=[
+        (
+            expanduser('~/etc/'),
+            [
+                'etc/b3j0fdmts-synchronizer.conf'
+                'etc/gitlab/b3j0fdmts-gitlabstore.conf',
+                'etc/github/b3j0fdmts-githubstore.conf',
+                'etc/jira/b3j0fdmts-jirastore.conf'
+            ]
+        )
+    ]
 )

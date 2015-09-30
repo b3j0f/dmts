@@ -1,7 +1,7 @@
 Description
 ===========
 
-Use of the synchronizer system for development management tool synchronization.
+Development management tool synchronizer.
 
 .. image:: https://img.shields.io/pypi/l/b3j0f.dmts.svg
    :target: https://pypi.python.org/pypi/b3j0f.dmts/
@@ -62,7 +62,9 @@ pip install b3j0f.dmts
 Features
 ========
 
-In this implementation, we use thise model
+The development management tool synchronizer (DMTS) consists to synchronize data from such tools (thanks to the b3j0f sync system `b3j0f.sync`_).
+
+In this implementation, we use these models:
 
 - Project (b3j0f.dmts.model.item.project).
 - Issue (b3j0f.dmts.model.item.issue).
@@ -72,9 +74,14 @@ In this implementation, we use thise model
 - Label (b3j0f.dmts.model.label).
 - Member (b3j0f.dmts.model.member).
 - Milestone (b3j0f.dmts.model.milestone).
-- Attachment (b3j0f.dmts.model.attachment).
 
-And these examples of resources:
+And this store:
+
+- RESTStore (b3j0f.dmts.rest).
+
+This project is also an example of data synchronizing between jira, gitlab and github.
+
+And these examples of stores:
 
 - Jira (b3j0f.dmts.jira).
 - Github (b3j0f.dmts.github).
@@ -96,3 +103,5 @@ Donation
 .. _Homepage: https://github.com/b3j0f/dmts
 .. _Documentation: http://b3j0fdmts.readthedocs.org/en/master/
 .. _PyPI: https://pypi.python.org/pypi/b3j0f.dmts/
+
+.. _b3j0f.sync: https://github.com/b3j0f/sync

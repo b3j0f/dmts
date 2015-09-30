@@ -26,8 +26,8 @@
 
 """Gitlab store module in charge of storing data."""
 
-from b3j0f.conf import Configurable, conf_paths
-from b3j0f.dmts.rpc.store import RpcStore
+from b3j0f.conf import Configurable, conf_paths, add_category
+from b3j0f.dmts.rest.store import RESTStore
 from b3j0f.dmts.model import (
     Account, Label, Milestone, Project, Issue, Comment, Attachment, Group,
     Member
@@ -38,8 +38,9 @@ import requests
 from gitlab import Gitlab
 
 
-@conf_paths('gitlabstore.conf')
-class GitlabStore(RpcStore):
+@conf_paths('b3j0fdmts-gitlabstore.conf')
+@add_category('GITLABSTORE')
+class GitlabStore(RESTStore):
     """Gitlab store."""
 
     def currentaccount(self):
@@ -50,6 +51,28 @@ class GitlabStore(RpcStore):
         result = self.accessor['accounts']._responsetodata(response=response)
 
         return result
+
+    def connect(self):
+
+        currentaccount()  # raise an error if it is impossible to run
+
+    def _isconnected(self):
+
+        result = False
+
+        try:
+            currentaccount()
+
+        except GitlabStore.Error:
+            pass
+
+        else:
+            result = True
+
+        return result
+
+    def disconnect(self):
+        pass
 
     def _query(self, scopes, _id=None, pids=None, **params):
         """Process an http function.
@@ -102,7 +125,8 @@ class GitlabStore(RpcStore):
             response = self._processquery(
                 operation='post', scopes='session', **kwargs
             )
-            params['private_token'] = response['private_token']
+            self.token = params['private_token']  # set private token
+            params['private_token'] = self.token  # use private token
 
         if params:  # add '?' for url parameters
             result = '{0}?'.format(result)

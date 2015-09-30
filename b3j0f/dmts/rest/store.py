@@ -29,7 +29,7 @@
 from b3j0f.sync import Store
 
 
-class RpcStore(Store):
+class RESTStore(Store):
     """Remote Procedure Call store."""
 
     def __init__(
@@ -38,15 +38,15 @@ class RpcStore(Store):
             *args, **kwargs
     ):
         """
-        :param str url: dmt url.
-        :param str login: dmt login connection.
-        :param str pwd: dmt pwd connection.
-        :param str email: email.
-        :param str token: dmt token connection.
-        :param str oauth: dmt oauth connection.
+        :param str url: host.
+        :param str login: login connection.
+        :param str pwd: pwd connection.
+        :param str email: email connection.
+        :param str token: token connection.
+        :param str oauth: oauth connection.
         """
 
-        super(RpcStore, self).__init__(*args, **kwargs)
+        super(RESTStore, self).__init__(*args, **kwargs)
 
         # set attributes
         self.url = url
