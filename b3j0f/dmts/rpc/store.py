@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------
 # The MIT License (MIT)
 #
-# Copyright (c) 2015 Jonathan Labéjof <jonathan.labejof@gmail.com>
+# Copyright (c) 2014 Jonathan Labéjof <jonathan.labejof@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,34 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""item package."""
+"""Resource module in charge of storing data."""
 
-__all__ = ['Project', 'Issue', 'Item']
+from b3j0f.sync import Store
 
 
-from b3j0f.dmts.model.item.project import Project
-from b3j0f.dmts.model.item.issue import Issue
-from b3j0f.dmts.model.item.base import Item
+class RpcStore(Store):
+    """Remote Procedure Call store."""
+
+    def __init__(
+            self,
+            url=None, login=None, pwd=None, email=None, token=None, oauth=None,
+            *args, **kwargs
+    ):
+        """
+        :param str url: dmt url.
+        :param str login: dmt login connection.
+        :param str pwd: dmt pwd connection.
+        :param str email: email.
+        :param str token: dmt token connection.
+        :param str oauth: dmt oauth connection.
+        """
+
+        super(RpcStore, self).__init__(*args, **kwargs)
+
+        # set attributes
+        self.url = url
+        self.login = login
+        self.pwd = pwd
+        self.email = email
+        self.token = token
+        self.oauth = oauth

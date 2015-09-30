@@ -24,20 +24,67 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.dmts.model.item.base import Item
+"""Module of model base classes.
+
+Contains abstract classes used to design all data useful in development
+management projects.
+"""
+
+from b3j0f.sync import Data, datafields
 
 
-class Project(Item):
-    """Handle development management tool project information."""
+@datafields('owner')
+class Element(Data):
 
-    def __init__(self, avatar=None, public=True, **kwargs):
+    def __init__(self, owner, *args, **kwargs):
         """
-        :param str avatar: project avatar.
-        :param bool public: public access.
-        :param dict kwargs: item kwargs (_id, desc, etc.).
+        :param Account owner: owner id.
         """
 
-        super(Project, self).__init__(**kwargs)
+        super(Element, self).__init__(*args, **kwargs)
 
-        self.avatar = avatar
-        self.public = public
+        self._owner = owner
+
+
+@datafields('project')
+class ProjectElement(Data):
+
+    def __init__(self, project, *args, **kwargs):
+        """
+        :param Project project: project.
+        """
+
+        super(ProjectElement, self).__init__(*args, **kwargs)
+
+        self._project = project
+
+    def _pids(self):
+
+        return self.project._id
+
+    def _pnames(self):
+
+        return self.project.name
+
+
+@datafields('url', 'archived', 'tags')
+class Item(Element):
+    """Development management tool item."""
+
+    class Error(Exception):
+        """Handle item errors."""
+
+    def __init__(
+        self, url=None, owner=None, archived=False, tags=None, **kwargs
+    ):
+        """
+        :param str url: item url.
+        :param bool archived: item archiving state.
+        :param list tags: item tags.
+        """
+
+        super(Item, self).__init__(**kwargs)
+
+        self._url = url
+        self._archived = archived
+        self._tags = tags

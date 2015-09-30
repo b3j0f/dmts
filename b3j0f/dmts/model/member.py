@@ -24,7 +24,7 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.sync.elt import Element
+from b3j0f.dmts.model.base import Element
 
 
 class Member(Element):

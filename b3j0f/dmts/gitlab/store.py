@@ -24,44 +24,127 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""Gitlab resource module in charge of storing data."""
+"""Gitlab store module in charge of storing data."""
 
-from b3j0f.conf import Configurable
-from b3j0f.dmts.rpc.resource import RpcResource
-
+from b3j0f.conf import Configurable, conf_paths
+from b3j0f.dmts.rpc.store import RpcStore
 from b3j0f.dmts.model import (
     Account, Label, Milestone, Project, Issue, Comment, Attachment, Group,
     Member
 )
 
+import requests
+
 from gitlab import Gitlab
 
 
-class GitlabResource(RpcResource):
-    """Gitlab resource."""
+@conf_paths('gitlabstore.conf')
+class GitlabStore(RpcStore):
+    """Gitlab store."""
 
-    def connect(self):
-        """Connect to the remote element with self attributes."""
+    def currentaccount(self):
+        """Get current account data."""
 
-        kwargs = {'host': self.url}
+        response = self._processquery(scopes='user')
 
-        if self.login is not None:
-            kwargs['basic_auth'] = (self.login, self.pwd)
+        result = self.accessor['accounts']._responsetodata(response=response)
 
-        if self.oauth is not None:
-            kwargs['oauth_token'] = self.oauth
+        return result
 
+    def _query(self, scopes, _id=None, pids=None, **params):
+        """Process an http function.
+
+        :param list scopes: scope names. For example, an issue uses
+            ['projects', 'issues'].
+        :param int _id: data id.
+        :param list pids: parent ids.
+        :param dict params: query parameters.
+        """
+
+        result = self.url
+
+        # prepare path
+        result = '{0}/api/v3/'.format(self.url)
+
+        # prepare scopes
+        scopes = ensureiterable(scopes, exclude=str)
+        for index, scope in enumerate(scopes):
+            result = '{0}/{{{0}}}/'.format(index)
+
+        scopeformatparams = []
+        if pids:
+            pids = ensureiterable(pids, exclude=str)
+            scopeformatparams += pids
+
+        if _id:
+            scopeformatparams.append(_id)
+
+        elif scopes:
+            result = result[:-4]
+
+        result = result.format(scopeformatparams)
+
+        # prepare parameters
         if self.token is not None:
-            kwargs['token'] = self.token
+            params['private_token'] = self.token
 
-        self.conn = Gitlab(**kwargs)
+        elif self.oauth is not None:
+            params['access_token'] = self.oauth
 
-        if self.login is not None:
-            self.conn.login(
-                user=self.login, password=self.pwd, email=self.email
+        elif self.login or self.email:  # session mode
+            sessionparams = {}
+            if self.login:
+                sessionparams['login'] = self.login
+            if self.email:
+                sessionparams['email'] = self.email
+            sessionparams['password'] = self.pwd
+
+            response = self._processquery(
+                operation='post', scopes='session', **kwargs
+            )
+            params['private_token'] = response['private_token']
+
+        if params:  # add '?' for url parameters
+            result = '{0}?'.format(result)
+
+        for param in params:
+            val = params[param]
+            if isinstance(val, list):  # remove '[]'
+                val = str(val)[1:-1]
+            result = '{0}&{1}={2}'.format(result, param, val)
+
+        return result
+
+    def _processquery(
+            self, operation='get', scopes, _id=None, pids=None, **params
+    ):
+        """Process an http function.
+
+        :param str operation: rest operation name. Default 'get'.
+        :param str(s) scopes: scope names. For example, an issue uses
+            ['projects', 'issues'].
+        :param int _id: data id.
+        :param int(s) pids: parent id(s).
+        :param dict params: query parameters.
+        """
+
+        query = self._query(scopes=scopes, _id=_id, pids=pids, **params)
+
+        procparams = {'url': query}
+
+        request = requests[operation](query)
+
+        if request.status_code not in [200, 201]:
+            raise GitlabStore.Error(
+                'Wrong query {0} ({1} - {2}).'.format(
+                    query, request.status_code, request.reason
+                )
             )
 
-    def getelt(self, _id, _type, pid=None):
+        else:
+            return request.json()
+
+    def get(self, _id, pids=None):
 
         result = None
 
@@ -103,10 +186,8 @@ class GitlabResource(RpcResource):
 
         return result
 
-    def findelts(
-            self,
-            names=None, descs=None, created=None, updated=None, _type=None,
-            **kwargs
+    def find(
+            self, names=None, descs=None, created=None, updated=None, **kwargs
     ):
 
         result = []
@@ -158,7 +239,7 @@ class GitlabResource(RpcResource):
                         result.append(gro)
 
             elif issubclass(typ, Member):
-                members = self.conn.getgroupmembers(group_id=elt.group)
+                members = self.conn.getgroupmembers(group_id=data.group)
                 if members:
                     for member in members:
                         mem = Member(**member)
@@ -192,143 +273,143 @@ class GitlabResource(RpcResource):
                                 result.append(mil)
 
             else:
-                raise JiraResource.Error('Unknown type {0}'.format(typ))
+                raise JiraStore.Error('Unknown type {0}'.format(typ))
 
         return result
 
-    def _addelt(self, elt):
+    def _add(self, data):
 
-        result = elt
+        result = data
 
-        if isinstance(elt, Project):
-            if not self.conn.createproject(name=elt.name, **elt):
+        if isinstance(data, Project):
+            if not self.conn.createproject(name=data.name, **data):
                 result = None
 
-        elif isinstance(elt, Account):
+        elif isinstance(data, Account):
             if not self.conn.createuser(
-                name=elt.name, username=elt.fullname,
-                password=elt.pwd, email=elt.email
+                name=data.name, username=data.fullname,
+                password=data.pwd, email=data.email
             )
             result = None
 
-        elif isinstance(elt, Milestone):
+        elif isinstance(data, Milestone):
             if not self.conn.createmilestone(
-                project_id=elt.project, title=elt.name, **elt
+                project_id=data.project, title=data.name, **data
             ):
                 result = None
 
-        elif isinstance(elt, Issue):
+        elif isinstance(data, Issue):
             if not self.conn.createissue(
-                project_id=elt.project, title=elt.name, **elt
+                project_id=data.project, title=data.name, **data
             ):
                 result = None
 
-        elif isinstance(elt, Group):
-            if not self.conn.creategroup(name=elt.name, **elt):
+        elif isinstance(data, Group):
+            if not self.conn.creategroup(name=data.name, **data):
                 result = None
 
-        elif isinstance(elt, Member):
+        elif isinstance(data, Member):
             if not self.conn.addgroupmember(
-                group_id=elt.group, user_id=elt.account,
-                access_level=elt.access_lvl
+                group_id=data.group, user_id=data.account,
+                access_level=data.access_lvl
             )
             result = None
 
-        elif isinstance(elt, Comment):
+        elif isinstance(data, Comment):
             if not self.conn.createissuewallnote(
-                project_id=elt.group, issue_id=elt.issue,
-                content=elt.content
+                project_id=data.group, issue_id=data.issue,
+                content=data.content
             )
             result = None
 
-        elif isinstance(elt, Label):
+        elif isinstance(data, Label):
             if not self.conn.createlabel(
-                project_id=elt.group, name=elt.name, color=elt.color
+                project_id=data.group, name=data.name, color=data.color
             )
             result = None
 
         else:
-            raise self.Error('Wrong type {0}.'.format(elt))
+            raise self.Error('Wrong type {0}.'.format(data))
 
         return result
 
-    def _updateelt(self, elt, old, upsert):
+    def _update(self, data, old):
 
-        result = elt
+        result = data
 
-        if isinstance(elt, Account):
-            if not self.conn.edituser(user_id=elt._id, **elt):
+        if isinstance(data, Account):
+            if not self.conn.edituser(user_id=data._id, **data):
                 result = None
 
-        elif isinstance(elt, Project):
-            if not self.conn.editproject(project_id=elt._id, **elt):
+        elif isinstance(data, Project):
+            if not self.conn.editproject(project_id=data._id, **data):
                 result = None
 
-        elif isinstance(elt, Milestone):
+        elif isinstance(data, Milestone):
             if not self.conn.editmilestone(
-                project_id=elt.project, milestone_id=elt._id, **elt
+                project_id=data.project, milestone_id=data._id, **data
             ):
                 result = None
 
-        elif isinstance(elt, Issue):
+        elif isinstance(data, Issue):
             if not self.conn.editissue(
-                project_id=elt.project, issue_id=elt._id, **elt
+                project_id=data.project, issue_id=data._id, **data
             ):
                 result = None
 
-        elif isinstance(elt, Group):
+        elif isinstance(data, Group):
             if old is not None:  # are there members ?
-                newmembers = set(elt.accounts)
+                newmembers = set(data.accounts)
                 oldmembers = set(old.accounts)
                 memberstoremove = oldmembers - newmembers
                 memberstoadd = newmembers - oldmembers
 
-        elif isinstance(elt, Member):
+        elif isinstance(data, Member):
             if not self.conn.editgroupmember(
-                group_id=elt.group, user_id=elt.account,
-                access_level=elt.access_lvl
+                group_id=data.group, user_id=data.account,
+                access_level=data.access_lvl
             ):
                 result = None
 
-        elif isinstance(elt, Label):
+        elif isinstance(data, Label):
             if not self.conn.editlabel(
-                project_id=elt.project, name=old.name, new_name=elt.name,
-                color=elt.color
+                project_id=data.project, name=old.name, new_name=data.name,
+                color=data.color
             ):
                 result = None
 
         else:
-            raise self.Error('Wrong type {0}'.format(elt))
+            raise self.Error('Wrong type {0}'.format(data))
 
         return result
 
-    def _delelt(self, elt):
+    def _del(self, data):
 
-        result = elt
+        result = data
 
-        if isinstance(elt, Account):
-            if not self.conn.deleteuser(user_id=elt._id):
+        if isinstance(data, Account):
+            if not self.conn.deleteuser(user_id=data._id):
                 result = None
 
-        elif isinstance(elt, Project):
-            if not self.conn.deleteproject(project_id=elt._id):
+        elif isinstance(data, Project):
+            if not self.conn.deleteproject(project_id=data._id):
                 result = None
 
-        elif isinstance(elt, Group):
-            if not self.conn.deletegroup(group_id=elt._id):
+        elif isinstance(data, Group):
+            if not self.conn.deletegroup(group_id=data._id):
                 result = None
 
-        elif isinstance(elt, Member):
+        elif isinstance(data, Member):
             if not self.conn.deletegroupmember(
-                group_id=elt.group, user_id=elt.account
+                group_id=data.group, user_id=data.account
             ):
                 result = None
 
-        elif isinstance(elt, Label):
-            if not self.conn.deletelabel(project_id=elt.group, name=elt.name):
+        elif isinstance(data, Label):
+            if not self.conn.deletelabel(project_id=data.group, name=data.name):
                 result = None
 
         else:
-            raise self.Error('Wrong type {0}'.format(elt))
+            raise self.Error('Wrong type {0}'.format(data))
 
         return result

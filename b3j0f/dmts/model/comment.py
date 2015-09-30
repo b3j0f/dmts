@@ -24,23 +24,38 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.sync.elt import Element
+from b3j0f.dmts.model.base import Element
+from b3j0f.sync import datafields
 
 
+@datafields('project', 'issue', 'content', 'attachment')
 class Comment(Element):
     """Embed issue information."""
 
     def __init__(
-            self, issue, account=None, content=None, **kwargs
+            self,
+            project, issue, content=None, account=None, attachment=None,
+            **kwargs
     ):
         """
-        :param str issue: issue id.
+        :param Project project: parent project.
+        :param Issue issue: parent issue.
         :param str content: content.
-        :param Account account: account owner
+        :param str attachment: attachment.
         """
 
         super(Comment, self).__init__(**kwargs)
 
-        self.issue = issue
-        self.content = content
-        self.account = account
+        self._project = project
+        self._issue = issue
+        self._content = content
+        self._attachment = attachment
+
+    def _pids(self):
+
+        return self.project._id, self.issue._id
+
+    def _pnames(self):
+
+        return self.project.name, self.issue.name
+

@@ -24,10 +24,10 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""Github resource module in charge of storing data."""
+"""Github store module in charge of storing data."""
 
 from b3j0f.conf import Configurable
-from b3j0f.dmts.rpc.resource import RpcResource
+from b3j0f.dmts.rpc.store import RpcStore
 
 from b3j0f.dmts.model import (
     Account, Label, Milestone, Project, Issue, Comment, Attachment, Group,
@@ -37,15 +37,15 @@ from b3j0f.dmts.model import (
 from github3 import GitHubEnterprise, GitHub
 
 
-class GitHubResource(RpcResource):
-    """Github resource."""
+class GitHubStore(RpcStore):
+    """Github store."""
 
     def __init__(self, repo, *args, **kwargs):
         """
         :param str repo: repository name.
         """
 
-        super(GitHubResource, self).__init__(*args, **kwargs)
+        super(GitHubStore, self).__init__(*args, **kwargs)
 
         self.repo = repo
 
@@ -63,7 +63,7 @@ class GitHubResource(RpcResource):
 
         self.conn = GitHubEnterprise(**kwargs)
 
-    def getelt(self, _id, _type, pid=None):
+    def get(self, _id, pids=None):
 
         result = None
 
@@ -75,7 +75,7 @@ class GitHubResource(RpcResource):
 
         return result
 
-    def findelts(
+    def find(
             self,
             names=None, descs=None, created=None, updated=None, _type=None,
             **kwargs
@@ -94,7 +94,7 @@ class GitHubResource(RpcResource):
             if issubclass(typ, Label):
 
             else:
-                raise JiraResource.Error('Unknown type {0}'.format(typ))
+                raise JiraStore.Error('Unknown type {0}'.format(typ))
 
         return result
 

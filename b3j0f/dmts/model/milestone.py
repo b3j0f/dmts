@@ -24,17 +24,21 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.sync.elt import Element
+from b3j0f.dmts.model.base import ProjectElement
+from b3j0f.sync import datafields
 
 
-class Milestone(Element):
+@datafields('duedate', 'state')
+class Milestone(ProjectElement):
     """Handle development management tool project information."""
 
-    def __init__(self, project, *args, **kwargs):
+    def __init__(self, duedate, state=None, *args, **kwargs):
         """
-        :param str project: project id.
+        :param str duedate: milestone duedate.
+        :param str state: milestone state.
         """
 
         super(Milestone, self).__init__(*args, **kwargs)
 
-        self.project = project
+        self._duedate = duedate
+        self._state = state

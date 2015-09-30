@@ -24,19 +24,21 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.sync.elt import Element
+from b3j0f.dmts.model.base import ProjectElement
+from b3j0f.sync import datafields
 
 
-class Label(Element):
+@datafields('color', 'state')
+class Label(ProjectElement):
     """Handle development management tool label information."""
 
-    def __init__(self, project=None, color=None, *args, **kwargs):
+    def __init__(self, color=None, state=None, *args, **kwargs):
         """
-        :param str project: label project.
-        :param str color: label color.
+        :param str color: label color id.
+        :param str state: milestone state.
         """
 
         super(Label, self).__init__(*args, **kwargs)
 
-        self.project = project
-        self.color = color
+        self._color = color
+        self._state = state

@@ -24,22 +24,25 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.dmts.elt import Element
+"""Project module."""
+
+from b3j0f.dmts.model.base import Item
+from b3j0f.sync import datafields
 
 
-class Item(Element):
-    """Development management tool item."""
+@datafields('avatar', 'public', 'state')
+class Project(Item):
+    """Handle development management tool project information."""
 
-    class Error(Exception):
-        """Handle item errors."""
-
-    def __init__(self, url=None, owner=None, **kwargs):
+    def __init__(self, avatar=None, public=True, state=None, *args, **kwargs):
         """
-        :param str url: item url.
-        :param str owner: item owner.
+        :param str avatar: project avatar.
+        :param bool public: public access.
+        :param str state: project state.
         """
 
-        super(Item, self).__init__(**kwargs)
+        super(Project, self).__init__(*args, **kwargs)
 
-        self.url = url
-        self.owner = owner
+        self._avatar = avatar
+        self._public = public
+        self._state = state

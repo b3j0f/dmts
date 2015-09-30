@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------
 # The MIT License (MIT)
 #
-# Copyright (c) 2014 Jonathan Labéjof <jonathan.labejof@gmail.com>
+# Copyright (c) 2015 Jonathan Labéjof <jonathan.labejof@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,23 +24,34 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.sync.elt import Element
+"""Jira project accessor module."""
 
 
-class Attachment(Element):
-    """Embed issue information."""
+from b3j0f.sync import Accessor
+from b3j0f.dmts.model.project import Project
 
-    def __init__(
-            self, issue=None, content=None, filename=None, *args, **kwargs
-    ):
-        """
-        :param str issue: issue title.
-        :param str content: content.
-        :param str filename: filename.
-        """
 
-        super(Attachment, self).__init__(*args, **kwargs)
+class ProjectAccessor(Accessor):
+    """Project accessor."""
 
-        self.issue = issue
-        self.content = content
-        self.filename = filename
+    __datatype__ = Project
+
+    def get(self, _id, pids=None):
+
+        raise NotImplementedError()
+
+    def find(self, ids=None, descs=None, created=None, updated=None, **kwargs):
+
+        raise NotImplementedError()
+
+    def _add(self, data):
+
+        raise NotImplementedError()
+
+    def _update(self, data, old):
+
+        raise NotImplementedError()
+
+    def _remove(self, data):
+
+        raise NotImplementedError()

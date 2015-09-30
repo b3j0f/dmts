@@ -24,21 +24,24 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""Annotation package."""
+"""Developer management tool synchronizer package."""
 
 __all__ = [
     '__version_info__', '__version__',
-    'DMTS', 'Resource',
-    'Project', 'Element', 'Account', 'Issue', 'Item', 'Label', 'Milestone'
+    'Project', 'Account', 'Issue', 'Label', 'Milestone', 'Group', 'Comment',
+    'Attachment',
+    'RpcStore', 'JiraStore', 'GitHubStore', 'GitLabStore'
 ]
 
 #: project version info
-__version_info__ = 0, 2, 3, "beta", 0
+__version_info__ = 0, 0, 1, "alpha", 0
 #: project version
 __version__ = ".".join(str(v) for v in __version_info__[:3])
 
-from b3j0f.dmts.synchronizer import DMTS
-from b3j0f.dmts.resource import Resource
-from b3j0f.dmts.element import (
-    Element, Account, Label, Milestone, Project, Issue, Item
+from b3j0f.dmts.model import (
+    Account, Label, Milestone, Project, Issue, Comment, Attachment, Group
 )
+from b3j0f.dmts.rpc import RpcStore
+from b3j0f.dmts.jira import JiraStore
+from b3j0f.dmts.gitlab import GitLabStore
+from b3j0f.dmts.github import GitHubStore

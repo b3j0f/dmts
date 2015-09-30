@@ -24,8 +24,16 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.sync.elt import Element
+from b3j0f.sync import Data, datafields
 
 
-class Group(Element):
+@datafields('path')
+class Group(Data):
     """Embed group information."""
+
+    def __init__(self, path, *args, **kwargs):
+        """
+        :param str path: group path.
+        """
+
+        self._path = path

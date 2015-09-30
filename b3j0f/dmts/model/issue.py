@@ -24,36 +24,43 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""Resource module in charge of storing data."""
+"""Issue module."""
 
-from b3j0f.conf import Configurable
-from b3j0f.sync.elt import Element
-from b3j0f.sync.resource import Resource
+from b3j0f.dmts.model.base import Item
+from b3j0f.sync import datafields
 
 
-class RpcResource(Resource):
-    """Remote Procedure Call Resource."""
+@datafields('project', 'labels', 'assignee', 'parent', 'milestone', 'state')
+class Issue(Item):
+    """Embed issue information."""
 
     def __init__(
-            self,
-            url=None, login=None, pwd=None, email=None, token=None, oauth=None,
-            *args, **kwargs
+            self, project=None, labels=None, assignee=None,
+            parent=None, milestone=None, state=None, *args, **kwargs
     ):
         """
-        :param str url: dmt url.
-        :param str login: dmt login connection.
-        :param str pwd: dmt pwd connection.
-        :param str email: email.
-        :param str token: dmt token connection.
-        :param str oauth: dmt oauth connection.
+        :param Project project: parent project.
+        :param list labels: label names.
+        :param str assignee: issue assignee.
+        :param Issue parent: parent issue.
+        :param str milestone: issue milestone.
+        :param str state: issue state.
         """
 
-        super(RpcResource, self).__init__(*args, **kwargs)
+        super(Issue, self).__init__(*args, **kwargs)
 
-        # set attributes
-        self.url = url
-        self.login = login
-        self.pwd = pwd
-        self.email = email
-        self.token = token
-        self.oauth = oauth
+        self._project = project
+        self._pids = [project]
+        self._labels = labels
+        self._assignee = assignee
+        self._parent = parent
+        self._milestone = milestone
+        self._state = state
+
+    def _pids(self):
+
+        return self.project._id
+
+    def _pnames(self):
+
+        return self.project.name

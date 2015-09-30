@@ -60,7 +60,7 @@ setup(
     url='https://github.com/b3j0f/dmts/',
     license='MIT License',
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 4 - Alpha",
         "License :: OSI Approved :: MIT License",
         "Natural Language :: French",
         "Operating System :: OS Independent",
