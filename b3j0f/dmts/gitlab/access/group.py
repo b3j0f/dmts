@@ -26,8 +26,11 @@
 
 """GitLab group accessor module."""
 
+__all__ = ['GroupAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.group import Group
+
+from ...model.group import Group
 
 
 class GroupAccessor(Accessor):

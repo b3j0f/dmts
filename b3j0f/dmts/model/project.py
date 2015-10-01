@@ -26,23 +26,22 @@
 
 """Project module."""
 
-from b3j0f.dmts.model.base import Item
+from .base import Item
+
 from b3j0f.sync import datafields
 
 
-@datafields('avatar', 'public', 'state')
+@datafields('avatar', 'public')
 class Project(Item):
     """Handle development management tool project information."""
 
-    def __init__(self, avatar=None, public=True, state=None, *args, **kwargs):
+    def __init__(self, avatar=None, public=True, *args, **kwargs):
         """
         :param str avatar: project avatar.
         :param bool public: public access.
-        :param str state: project state.
         """
 
         super(Project, self).__init__(*args, **kwargs)
 
         self._avatar = avatar
         self._public = public
-        self._state = state

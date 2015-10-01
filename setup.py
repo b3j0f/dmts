@@ -31,24 +31,41 @@ from setuptools import setup, find_packages
 
 from os.path import abspath, dirname, join, expanduser
 
+from re import compile as re_compile, S as re_S
+
+NAME = 'b3j0f.dmts'  # library name
+
+_namepath = NAME.replace('.', '/')
+
+_base_path = dirname(abspath(__file__))
+
 # get long description from setup directory abspath
-with open(join(dirname(abspath(__file__)), 'README.rst')) as f:
+with open(join(_base_path, 'README.rst')) as f:
     DESC = f.read()
+
+# Get the version - do not use normal import because it does break coverage
+# thanks to the python jira project
+# (https://github.com/pycontribs/jira/blob/master/setup.py)
+with open(join(_base_path, _namepath, 'version.py')) as f:
+    stream = f.read()
+    regex = r'.*__version__ = \'(.*?)\''
+    VERSION = re_compile(regex, re_S).match(stream).group(1)
 
 KEYWORDS = [
     'utils', 'tools', 'issues', 'milestone', 'project', 'development',
     'synchronizer'
 ]
 
-DEPENDENCIES = [
-    'b3j0f.sync', 'b3j0f.conf', 'b3j0f.utils', 'jira', 'github3.py', 'requests'
-]
+DEPENDENCIES = ['b3j0f.sync', 'b3j0f.conf', 'b3j0f.utils']
 
 DESCRIPTION = 'Set of tools to synchronize development management tools'
 
+
+URL = 'https://github.com/{0}'.format(_namepath)
+
 setup(
-    name='b3j0f.dmts',
-    version='0.0.1',
+    name=NAME,
+    version=VERSION,
     packages=find_packages(exclude=['test.*', '*.test.*']),
     author='b3j0f',
     author_email='jlabejof@yahoo.fr',
@@ -56,25 +73,25 @@ setup(
     description=DESCRIPTION,
     long_description=DESC,
     include_package_data=True,
-    url='https://github.com/b3j0f/dmts/',
+    url=URL,
     license='MIT License',
     classifiers=[
-        "Development Status :: 4 - Alpha",
-        "License :: OSI Approved :: MIT License",
-        "Natural Language :: French",
-        "Operating System :: OS Independent",
-        "Topic :: Utilities",
-        "Topic :: Software Development",
-        "Intended Audience :: Developers",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.0",
-        "Programming Language :: Python :: 3.1",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
-        "Programming Language :: Python :: 3.4"
+        'Development Status :: 4 - Alpha',
+        'License :: OSI Approved :: MIT License',
+        'Natural Language :: French',
+        'Operating System :: OS Independent',
+        'Topic :: Utilities',
+        'Topic :: Software Development',
+        'Intended Audience :: Developers',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.0',
+        'Programming Language :: Python :: 3.1',
+        'Programming Language :: Python :: 3.2',
+        'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4'
     ],
     test_suite='b3j0f',
     keywords=KEYWORDS,

@@ -26,8 +26,11 @@
 
 """GitLab issue accessor module."""
 
+__all__ = ['IssueAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.issue import Issue
+
+from ...model.issue import Issue
 
 
 class IssueAccessor(Accessor):

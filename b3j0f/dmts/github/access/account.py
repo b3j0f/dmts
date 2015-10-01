@@ -26,8 +26,11 @@
 
 """GitLab account accessor module."""
 
+__all__ = ['AccountAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.account import Account
+
+from ...model.account import Account
 
 
 class AccountAccessor(Accessor):

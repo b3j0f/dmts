@@ -26,8 +26,11 @@
 
 """GitLab comment accessor module."""
 
+__all__ = ['CommentAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.comment import Comment
+
+from ...model.comment import Comment
 
 
 class CommentAccessor(Accessor):

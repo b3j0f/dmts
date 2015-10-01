@@ -26,8 +26,11 @@
 
 """Github store module in charge of storing data."""
 
+__all__ = ['GitHubStore']
+
 from b3j0f.conf import add_category, conf_paths
-from b3j0f.dmts.http.store import HTTPStore
+
+from ..http.store import HTTPStore
 
 
 @conf_paths('b3j0fdmts-githubstore.conf')

@@ -31,10 +31,10 @@ __all__ = [
 ]
 
 
-from b3j0f.dmts.model.account import Account
-from b3j0f.dmts.model.label import Label
-from b3j0f.dmts.model.milestone import Milestone
-from b3j0f.dmts.model.project import Project
-from b3j0f.dmts.model.issue import Issue
-from b3j0f.dmts.model.comment import Comment
-from b3j0f.dmts.model.group import Group
+from .account import Account
+from .label import Label
+from .milestone import Milestone
+from .project import Project
+from .issue import Issue
+from .comment import Comment
+from .group import Group

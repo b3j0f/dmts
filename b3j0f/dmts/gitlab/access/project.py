@@ -26,51 +26,48 @@
 
 """GitLab project accessor module."""
 
+__all__ = ['ProjectAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.project import Project
+
+from .base import GitLabAccessor
+from ...model.project import Project
 
 
-class ProjectAccessor(Accessor):
+class ProjectAccessor(GitLabAccessor):
     """Project accessor."""
 
     __datatype__ = Project
 
-    def _responsetodata(self, response):
+    __scopes__ = 'projects'
+
+    def sdata2data(self, sdata):
         """Convert a response to a project."""
-
+        print sdata
         result = self.create(
-            avatar=response['avatar_url'],  # project fields
-            public=response['public'],
-            state=response['state'],
-            url=response['web_url'],  # item fields
-            owner=response['owner']['username'],
-            archived=response['archived'],
-            tags=response['tag_list'],
-            _id=response['id'],  # Data fields
-            name=response['name'],  # element fields
-            description=response['description'],
-            created=response['created_at'],  # TODO: format to a datetime
-            updated=response.get('updated_at')  # TODO: format to a datetime
+            avatar=sdata['avatar_url'],  # project fields
+            public=sdata['public'],
+            url=sdata['web_url'],  # item fields
+            owner=self.store.sdata2data(
+                accessor='accounts', sdata=sdata['owner']
+            ) if 'owner' in sdata else None,
+            archived=sdata['archived'],
+            tags=sdata['tag_list'],
+            _id=sdata['id'],  # Data fields
+            name=sdata['name'],  # element fields
+            description=sdata['description'],
+            created=sdata['created_at'],  # TODO: format to a datetime
+            updated=sdata.get('updated_at')  # TODO: format to a datetime
         )
 
         return result
 
-    def get(self, _id, pids=None, globalid=None):
+    def getbyname(self, name, **_):
 
-        response = self.store._processquery(scopes='projects', _id=_id)
-
-        result = self._responsetodata(response=response)
-
-        return result
-
-    def getbyname(self, name, pnames=None, globalname=None):
-
-        response = self.store._processquery(
-            scopes='projects/search', _id=name
-        )
+        response = self.store._processquery(scopes='projects/search', _id=name)
 
         if response:
-            result = self._responsetodata(response=response[0])
+            result = self.sdata2data(sdata=response[0])
 
         else:
             result = None
@@ -80,51 +77,36 @@ class ProjectAccessor(Accessor):
     def find(self, name=None, **kwargs):
 
         if name:
-            response = self.store._processquery(
-                scopes='projects', _id=kwargs['name']
-            )
+            kwargs = {'_id': name}
 
-        else:
-            response = self.store._processquery(
-                scopes='projects', search=kwargs
-            )
+        elif kwargs:
+            kwargs = {'search': kwargs}
 
-        result = map(self._responsetodata, response)
+        result = super(ProjectAccessor, self).find(**kwargs)
 
         return result
 
-    def _add(self, data):
+    def _addkwargs(self, data):
+
+        result = {
+            'name': data.name,
+            'description': data.description,
+            'public': data.public
+        }
 
         if data.owner is None:
-            scopes = 'projects'
+            result['scopes'] = 'projects'
 
         else:
-            scopes = 'projects/user/{0}'.format(data.owner)
-
-        response = self.store._processquery(
-            verb='post', scopes=scopes, name=data.name,
-            description=data.description, public=data.public
-        )
-
-        result = self._responsetodata(response)
+            result['scopes'] = 'projects/user/{0}'.format(data.owner._id)
 
         return result
 
-    def _update(self, data, old):
+    def _updatekwargs(self, data, old):
 
-        response = self.store._processquery(
-            verb='put', scopes='projects', _id=data._id,
-            name=data.name, description=data.description, public=data.public
-        )
-
-        result = self._responsetodata(response=response)
+        result = {
+            '_id': data._id, 'name': data.name, 'public': data.public,
+            'description': data.description
+        }
 
         return result
-
-    def _remove(self, data):
-
-        self._processquery(
-            verb='delete', scopes='projects', _id=data._id
-        )
-
-        return data

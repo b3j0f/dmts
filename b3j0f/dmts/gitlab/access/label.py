@@ -26,8 +26,11 @@
 
 """GitLab label accessor module."""
 
+__all__ = ['LabelAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.label import Label
+
+from ...model.label import Label
 
 
 class LabelAccessor(Accessor):

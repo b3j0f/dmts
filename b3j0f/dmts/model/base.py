@@ -36,7 +36,7 @@ from b3j0f.sync import Data, datafields
 @datafields('owner')
 class Element(Data):
 
-    def __init__(self, owner, *args, **kwargs):
+    def __init__(self, owner=None, *args, **kwargs):
         """
         :param Account owner: owner id.
         """
@@ -71,19 +71,14 @@ class ProjectElement(Data):
 class Item(Element):
     """Development management tool item."""
 
-    class Error(Exception):
-        """Handle item errors."""
-
-    def __init__(
-        self, url=None, owner=None, archived=False, tags=None, **kwargs
-    ):
+    def __init__(self, url=None, archived=False, tags=None, *args, **kwargs):
         """
         :param str url: item url.
         :param bool archived: item archiving state.
         :param list tags: item tags.
         """
 
-        super(Item, self).__init__(**kwargs)
+        super(Item, self).__init__(*args, **kwargs)
 
         self._url = url
         self._archived = archived

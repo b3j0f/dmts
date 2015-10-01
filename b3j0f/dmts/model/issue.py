@@ -26,7 +26,8 @@
 
 """Issue module."""
 
-from b3j0f.dmts.model.base import Item
+from .base import Item
+
 from b3j0f.sync import datafields
 
 

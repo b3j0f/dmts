@@ -24,15 +24,17 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.dmts.model.base import Element
-from b3j0f.sync import datafields
+from b3j0f.sync import datafields, Data
 
 
 @datafields('email', 'pwd', 'fullname', 'avatar', 'state')
-class Account(Element):
+class Account(Data):
     """Development management tool account."""
 
-    def __init__(self, email, pwd, fullname, avatar, state, *args, **kwargs):
+    def __init__(
+            self,
+            fullname, avatar, state, email=None, pwd=None, *args, **kwargs
+    ):
 
         super(Account, self).__init__(*args, **kwargs)
 

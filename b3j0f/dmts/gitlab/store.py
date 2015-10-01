@@ -26,11 +26,12 @@
 
 """Gitlab store module in charge of storing data."""
 
+__all__ = ['GitLabStore']
+
 from b3j0f.utils.iterable import ensureiterable
 from b3j0f.conf import conf_paths, add_category
-from b3j0f.dmts.http.store import HTTPStore
 
-import requests
+from ..http.store import HTTPStore
 
 
 @conf_paths('b3j0fdmts-gitlabstore.conf')
@@ -38,38 +39,30 @@ import requests
 class GitLabStore(HTTPStore):
     """Gitlab store."""
 
-    def currentaccount(self):
+    DEFAULT_URL = '/api/v'
+    DEFAULT_VERSION = 3
+
+    def __init__(
+            self, url=DEFAULT_URL, version=DEFAULT_VERSION, *args, **kwargs
+    ):
+        """
+        :param str url: default request url. Default is ``/api/v``.
+        :param str version: api version. Default is 3.
+        """
+        super(GitLabStore, self).__init__(url=url, *args, **kwargs)
+
+        self.version = version
+
+    def _currentaccount(self):
         """Get current account data."""
 
         response = self._processquery(scopes='user')
 
-        result = self.accessor['accounts']._responsetodata(response=response)
+        result = self.accessors['accounts'].sdata2data(sdata=response)
 
         return result
 
-    def connect(self):
-
-        self.currentaccount()  # raise an error if it is impossible to run
-
-    def _isconnected(self):
-
-        result = False
-
-        try:
-            self.currentaccount()
-
-        except GitLabStore.Error:
-            pass
-
-        else:
-            result = True
-
-        return result
-
-    def disconnect(self):
-        pass
-
-    def _query(self, scopes, _id=None, pids=None, **params):
+    def _urlwparams(self, scopes, _id=None, pids=None, **params):
         """Process an http function.
 
         :param list scopes: scope names. For example, an issue uses
@@ -79,15 +72,12 @@ class GitLabStore(HTTPStore):
         :param dict params: query parameters.
         """
 
-        result = self.url
-
         # prepare path
-        result = '{0}/api/v3/'.format(self.url)
-
+        url = path = '{0}{1}'.format(self.url, self.version)
         # prepare scopes
         scopes = ensureiterable(scopes, exclude=str)
         for index, scope in enumerate(scopes):
-            result = '{0}/{{{0}}}/'.format(index)
+            url = '{0}/{1}/{{{2}}}/'.format(url, scope, index)
 
         scopeformatparams = []
         if pids:
@@ -95,12 +85,13 @@ class GitLabStore(HTTPStore):
             scopeformatparams += pids
 
         if _id:
+            url = url[:-1]
             scopeformatparams.append(_id)
 
         elif scopes:
-            result = result[:-4]
+            url = url[:-5]
 
-        result = result.format(scopeformatparams)
+        url = url.format(*scopeformatparams)
 
         # prepare parameters
         if self.token is not None:
@@ -117,27 +108,23 @@ class GitLabStore(HTTPStore):
                 sessionparams['email'] = self.email
             sessionparams['password'] = self.pwd
 
-            response = self._processquery(verb='post', scopes='session')
-            self.token = response['private_token']  # set private token
-            params['private_token'] = self.token  # use private token
-
-        if params:  # add '?' for url parameters
-            result = '{0}?'.format(result)
-
-        for param in params:
-            val = params[param]
-            if isinstance(val, list):  # remove '[]'
-                val = str(val)[1:-1]
-            result = '{0}&{1}={2}'.format(result, param, val)
-
-        return result
+            sessionurl = '{0}/session'.format(path)
+            response = self.request(
+                method=HTTPStore.POST, url=sessionurl, params=sessionparams
+            )
+            # set private token
+            self.token = params['private_token'] = response['private_token']
+        print url, params, 4
+        return url, params
 
     def _processquery(
-            self, scopes, verb='get', _id=None, pids=None, **params
+            self,
+            scopes, method=HTTPStore.DEFAULT_METHOD, _id=None, pids=None,
+            **params
     ):
-        """Process an http function.
+        """Process an http function with business paramters.
 
-        :param str verb: rest verb name. Default 'get'.
+        :param str method: rest method name. Default 'get'.
         :param str(s) scopes: scope names. For example, an issue uses
             ['projects', 'issues'].
         :param int _id: data id.
@@ -145,16 +132,10 @@ class GitLabStore(HTTPStore):
         :param dict params: query parameters.
         """
 
-        query = self._query(scopes=scopes, _id=_id, pids=pids, **params)
+        url, params = self._urlwparams(
+            scopes=scopes, _id=_id, pids=pids, **params
+        )
 
-        request = requests[verb](query)
+        result = self.request(method=method, url=url, params=params)
 
-        if request.status_code not in [200, 201]:
-            raise GitLabStore.Error(
-                'Wrong query {0} ({1} - {2}).'.format(
-                    query, request.status_code, request.reason
-                )
-            )
-
-        else:
-            return request.json()
+        return result

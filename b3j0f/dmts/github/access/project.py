@@ -26,8 +26,11 @@
 
 """GitLab project accessor module."""
 
+__all__ = ['ProjectAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.project import Project
+
+from ...model.project import Project
 
 
 class ProjectAccessor(Accessor):

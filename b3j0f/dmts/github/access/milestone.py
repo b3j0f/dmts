@@ -26,8 +26,11 @@
 
 """GitLab milestone accessor module."""
 
+__all__ = ['MilestoneAccessor']
+
 from b3j0f.sync import Accessor
-from b3j0f.dmts.model.milestone import Milestone
+
+from ...model.milestone import Milestone
 
 
 class MilestoneAccessor(Accessor):

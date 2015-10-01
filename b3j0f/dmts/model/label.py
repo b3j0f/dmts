@@ -24,7 +24,8 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-from b3j0f.dmts.model.base import ProjectElement
+from .base import ProjectElement
+
 from b3j0f.sync import datafields
 
 

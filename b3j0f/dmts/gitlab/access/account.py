@@ -26,37 +26,34 @@
 
 """GitLab account accessor module."""
 
-from b3j0f.sync import Accessor
-from b3j0f.dmts.model.account import Account
+__all__ = ['AccountAccessor']
+
+from .base import GitLabAccessor
+
+from ...model.account import Account
 
 
-class AccountAccessor(Accessor):
+class AccountAccessor(GitLabAccessor):
     """Account accessor."""
 
     __datatype__ = Account
+    __scopes__ = 'accounts'
 
-    def _responsetodata(self, response):
-        """Convert a response to a account."""
+    def sdata2data(self, sdata):
+        """Convert a sdata to an account."""
 
         result = self.create(
-            email=response['email'],  # account fields
-            fullname=response['name'],
-            avatar=response['avatar_url'],
-            state=response['state'],
-            _id=response['id'],  # Data fields
-            name=response['username'],  # element fields
+            email=sdata.get('email'),  # account fields
+            pwd=sdata.get('password'),
+            fullname=sdata['name'],
+            avatar=sdata['avatar_url'],
+            state=sdata['state'],
+            _id=sdata['id'],  # Data fields
+            name=sdata['username'],  # element fields
             # TODO: format to a datetime
-            created=response['created_at'],
-            updated=response.get('current_sign_in_at')
+            created=sdata.get('created_at'),
+            updated=sdata.get('current_sign_in_at')
         )
-
-        return result
-
-    def get(self, _id, pids=None, globalid=None):
-
-        response = self.store._processquery(scopes='users', _id=_id)
-
-        result = self._responsetodata(response=response)
 
         return result
 
@@ -68,11 +65,13 @@ class AccountAccessor(Accessor):
 
         for resp in response:
             if resp['username'] == name:
-                result = self._responsetodata(resp)
+                result = self.sdata2data(sdata=resp)
 
         return result
 
     def find(self, **kwargs):
+
+        result = []
 
         response = self.store._processquery(scopes='users')
 
@@ -82,38 +81,21 @@ class AccountAccessor(Accessor):
                 value = kwargs[key]
                 if value is not None and resp.get(key) == value:
                     accounts.append(resp)
-            result = map(self._responsetodata, accounts)
+
+            if accounts:
+                result = map(self.sdata2data, accounts)
 
         return result
 
-    def _add(self, data):
+    def _addkwargs(self, data):
 
-        response = self.store._processquery(
-            verb='post', scopes='users', email=data.email,
-            password=data.pwd, username=data.name, name=data.fullname,
-        )
-
-        result = self._responsetodata(response)
+        result = {
+            'email': data.email, 'password': data.pwd, 'username': data.name,
+            'name': data.fullname
+        }
 
         return result
 
-    def _update(self, data, old):
+    def _updatekwargs(self, data, old):
 
-        response = self.store._processquery(
-            verb='put', scopes='users', email=data.email,
-            password=data.pwd, username=data.name, name=data.fullname,
-        )
-
-        result = self._responsetodata(response=response)
-
-        return result
-
-    def _remove(self, data):
-
-        response = self._processquery(
-            verb='delete', scopes='users', _id=data._id
-        )
-
-        result = self._responsetodata(response)
-
-        return result
+        return self._addkwargs(data)

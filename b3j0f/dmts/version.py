@@ -3,7 +3,7 @@
 # --------------------------------------------------------------------
 # The MIT License (MIT)
 #
-# Copyright (c) 2015 Jonathan Labéjof <jonathan.labejof@gmail.com>
+# Copyright (c) 2014 Jonathan Labéjof <jonathan.labejof@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,34 +24,15 @@
 # SOFTWARE.
 # --------------------------------------------------------------------
 
-"""Jira project accessor module."""
+__all__ = ['__version_info__', '__version__']
 
+# Store the version here so:
+# 1) we don't load dependencies by storing it in __init__.py
+# 2) we can import it in setup.py for the same reason
+# 3) we can import it into the utils module
+# thanks to https://github.com/pycontribs/jira/blob/master/jira/version.py
 
-from b3j0f.sync import Accessor
-from b3j0f.dmts.model.project import Project
-
-
-class ProjectAccessor(Accessor):
-    """Project accessor."""
-
-    __datatype__ = Project
-
-    def get(self, _id, pids=None):
-
-        raise NotImplementedError()
-
-    def find(self, ids=None, descs=None, created=None, updated=None, **kwargs):
-
-        raise NotImplementedError()
-
-    def _add(self, data):
-
-        raise NotImplementedError()
-
-    def _update(self, data, old):
-
-        raise NotImplementedError()
-
-    def _remove(self, data):
-
-        raise NotImplementedError()
+#: project version info
+__version_info__ = 0, 0, 1, 'alpha', 0
+#: project version
+__version__ = '0.0.1'
