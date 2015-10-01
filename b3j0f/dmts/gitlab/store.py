@@ -95,10 +95,10 @@ class GitLabStore(HTTPStore):
 
         # prepare parameters
         if self.token is not None:
-            params['private_token'] = self.token
+            url = '{0}?private_token={1}'.format(url, self.token)
 
         elif self.oauth is not None:
-            params['access_token'] = self.oauth
+            url = '{0}?access_token={1}'.format(url, self.oauth)
 
         elif self.login or self.email:  # session mode
             sessionparams = {}
@@ -113,8 +113,9 @@ class GitLabStore(HTTPStore):
                 method=HTTPStore.POST, url=sessionurl, params=sessionparams
             )
             # set private token
-            self.token = params['private_token'] = response['private_token']
-        print url, params, 4
+            self.token = response['private_token']
+            url = '{0}?private_token={1}'.format(url, self.token)
+
         return url, params
 
     def _processquery(

@@ -43,7 +43,7 @@ class ProjectAccessor(GitLabAccessor):
 
     def sdata2data(self, sdata):
         """Convert a response to a project."""
-        print sdata
+
         result = self.create(
             avatar=sdata['avatar_url'],  # project fields
             public=sdata['public'],

@@ -167,13 +167,15 @@ class HTTPStore(Store):
         if headers:
             request_params['headers'] = headers
 
-        #if method == HTTPStore.DEFAULT_METHOD:
-        if params:
-            request_params['url'] = '{0}?{1}'.format(url, params)
+        if method == HTTPStore.DEFAULT_METHOD:
+            if params:
+                request_params['url'] = '{0}{1}{2}'.format(
+                    url, '' if '?' in url else '?', params
+                )
 
-#        else:
-#            request_params['body'] = params
-        print request_params
+        else:
+            request_params['body'] = params
+
         self._conn.request(**request_params)
 
         if method != 'HEAD':
