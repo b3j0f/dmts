@@ -28,55 +28,45 @@
 
 __all__ = ['IssueAccessor']
 
-from b3j0f.sync import Accessor
+from .base import GitLabAccessor
 
 from ...model.issue import Issue
 
 
-class IssueAccessor(Accessor):
+class IssueAccessor(GitLabAccessor):
     """Issue accessor."""
 
     __datatype__ = Issue
+    __scopes__ = 'projects'
 
-    def _responsetodata(self, response):
-        """Convert a response to a issue."""
+    def sdata2data(self, sdata):
+        """Convert a sdata to a issue."""
 
-        result = self.create(
-            project=response['project_id'],  # issue fields
-            labels=response['labels'],
-            assignee=response['assignee'],
-            milestone=response['milestone'],
-            state=response['state'],
-            owner=response['author']['username'],
-            _id=response['id'],  # Data fields
-            name=response['title'],  # element fields
-            pnames=self.store.get(
-                accessor='projects', _id=response['project']
+        result = self.create(  # issue fields
+            project=self.store.get(
+                accessor='projects', _id=sdata['project_id']
             ),
-            description=response['description'],
-            created=response['created_at'],  # TODO: format to a datetime
-            updated=response.get('updated_at')  # TODO: format to a datetime
+            labels=map(
+                lambda _id:
+                self.store.sdata2data(accessor='labels', sdata=_id),
+                sdata['labels']
+            ) if sdata.get('labels') else [],
+            assignee=self.store.get(
+                accessor='accounts', _id=sdata['assignee']
+            ),
+            milestone=self.store.get(
+                accessor='accounts', _id=sdata['milestone']
+            ),
+            state=sdata['state'],
+            owner=self.store.get(
+                accessor='accounts', _id=sdata['author']
+            ),
+            _id=sdata['id'],  # Data fields
+            name=sdata['title'],  # element fields
+            description=sdata['description'],
+            created=sdata['created_at'],  # TODO: format to a datetime
+            updated=sdata.get('updated_at')  # TODO: format to a datetime
         )
-
-        return result
-
-    def get(self, _id, pids=None, globalid=None):
-
-        response = None
-
-        if pids is None:  # find globaly an issue
-            issues = self.store._processquery(scopes='issues')
-            for issue in issues:
-                if issue['id'] == _id:
-                    response = issue
-                    break
-
-        else:
-            response = self.store._processquery(
-                scopes=['projects', 'issues'], _id=_id, pids=pids
-            )
-
-        result = self._responsetodata(response=response)
 
         return result
 
@@ -87,7 +77,7 @@ class IssueAccessor(Accessor):
         issues = self.store._processquery(scopes='issues')
         for issue in issues:
             if issue['title'] == name and pnames == issue.pnames:
-                result = issue
+                result = self.sdata2data(sdata=issue)
                 break
 
         return result
@@ -100,13 +90,14 @@ class IssueAccessor(Accessor):
             if name:
                 kwargs['title'] = name
             response = self.store._processquery(
-                scopes=['projects', 'issues'], pids=pids, **kwargs
+                scopes=self.__scopes__, pids=pids, **kwargs
             )
-            result = map(self._responsetodata, response)
+            if response:
+                result = map(self.sdata2data, response)
 
         else:
             issues = map(
-                self._responsetodata, self._processquery(scopes='issues')
+                self.sdata2data, self.store._processquery(scopes='issues')
             )
             kwargs['name'] = name
             for issue in issues:
@@ -117,31 +108,22 @@ class IssueAccessor(Accessor):
 
         return result
 
-    def _add(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        response = self.store._processquery(
-            verb='post', scopes=['projects', 'issues'], pids=data.pids,
-            title=data.name,
-            description=data.description, assignee_id=data.assignee,
-            milestone_id=data.milestone, labels=data.labels
-        )
+        kwargs.update({
+            'title': data.name,
+            'description': data.description,
+            'assignee_id': data.assignee._id,
+            'milestone_id': data.milestone._id,
+            'labels':
+                map(lambda data: data._id, data.labels) if data.labels else []
+        })
 
-        result = self._responsetodata(response)
+    def _fillupdatekwargs(self, data, old, kwargs):
 
-        return result
+        self._filladdkwargs(data=data, kwargs=kwargs)
 
-    def _update(self, data, old):
-
-        response = self.store._processquery(
-            verb='put', scopes=['projects', 'issues'], pids=data.pids,
-            _id=data._id, title=data.name, description=data.description,
-            assignee_id=data.assignee, milestone_id=data.milestone,
-            labels=data.labels, state_event=data.state
-        )
-
-        result = self._responsetodata(response=response)
-
-        return result
+        kwargs['state_event'] = data.state
 
     def _remove(self, data):
 

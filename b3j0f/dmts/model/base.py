@@ -49,7 +49,7 @@ class Element(Data):
 @datafields('project')
 class ProjectElement(Data):
 
-    def __init__(self, project, *args, **kwargs):
+    def __init__(self, project=None, *args, **kwargs):
         """
         :param Project project: project.
         """

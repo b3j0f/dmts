@@ -28,33 +28,25 @@
 
 __all__ = ['GroupAccessor']
 
-from b3j0f.sync import Accessor
+from .base import GitLabAccessor
 
 from ...model.group import Group
 
 
-class GroupAccessor(Accessor):
+class GroupAccessor(GitLabAccessor):
     """Group accessor."""
 
     __datatype__ = Group
+    __scopes__ ='groups'
 
-    def _responsetodata(self, response):
-        """Convert a response to a group."""
+    def sdata2data(self, sdata):
+        """Convert a sdata to a group."""
 
         result = self.create(
-            path=response['path'],  # group fields
-            _id=response['name'],  # Data fields
-            name=response['name'],
-            description=response['description']
+            path=sdata['path'],  # group fields
+            _id=sdata['name'],  # Data fields
+            description=sdata['description']
         )
-
-        return result
-
-    def get(self, _id, pids=None, globalid=None):
-
-        response = self.store._processquery(scopes='groups', _id=_id)
-
-        result = self._responsetodata(response=response)
 
         return result
 
@@ -65,38 +57,27 @@ class GroupAccessor(Accessor):
     def find(self, name=None, **kwargs):
 
         if name:
-            response = self._processquery(scopes='groups', search=name)
+            sdata = self.store._processquery(
+                scopes=self.__scopes__, search=name
+            )
 
         else:
-
-            response = self._processquery(scopes='groups')
+            sdata = self.store._processquery(scopes=self.__scopes__)
 
         result = []
 
-        for resp in response:
+        for resp in sdata:
             for key in kwargs:
                 value = kwargs[key]
                 if value is not None and resp.get(key) == value:
-                    group = self._responsetodata(resp)
+                    group = self.sdata2data(resp)
                     result.append(group)
 
         return result
 
-    def _add(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        response = self.store._processquery(
-            verb='post', scopes='groups', name=data.name,
-            description=data.description, path=data.path
-        )
-
-        result = self._responsetodata(response)
-
-        return result
-
-    def _remove(self, data):
-
-        self._processquery(
-            verb='delete', scopes='groups', _id=data._id
-        )
-
-        return data
+        kwargs.update({
+            'name': data.name, 'description': data.description,
+            'path': data.path
+        })

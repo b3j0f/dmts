@@ -86,27 +86,23 @@ class ProjectAccessor(GitLabAccessor):
 
         return result
 
-    def _addkwargs(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        result = {
+        kwargs.update({
             'name': data.name,
             'description': data.description,
             'public': data.public
-        }
+        })
 
         if data.owner is None:
-            result['scopes'] = 'projects'
+            kwargs['scopes'] = 'projects'
 
         else:
-            result['scopes'] = 'projects/user/{0}'.format(data.owner._id)
+            kwargs['scopes'] = 'projects/user/{0}'.format(data.owner._id)
 
-        return result
+    def _fillupdatekwargs(self, data, old, kwargs):
 
-    def _updatekwargs(self, data, old):
-
-        result = {
-            '_id': data._id, 'name': data.name, 'public': data.public,
+        kwargs.update({
+            'name': data.name, 'public': data.public,
             'description': data.description
-        }
-
-        return result
+        })

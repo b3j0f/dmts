@@ -28,42 +28,33 @@
 
 __all__ = ['MilestoneAccessor']
 
-from b3j0f.sync import Accessor
+from .base import GitLabAccessor
 
 from ...model.milestone import Milestone
 
 
-class MilestoneAccessor(Accessor):
+class MilestoneAccessor(GitLabAccessor):
     """Milestone accessor."""
 
     __datatype__ = Milestone
+    __scopes__ = ['projects', 'milestones']
 
-    def _responsetoproject(self, response):
-        """Convert a response to a milestone."""
+    def sdata2data(self, sdata):
+        """Convert a sdata to a milestone."""
 
         result = self.create(
             # milestones fields
-            duedate=response['duedate'],  # TODO; convert to datetime
-            state=response['state'],
+            duedate=sdata['duedate'],  # TODO; convert to datetime
+            state=sdata['state'],
             project=self.store.get(
-                accessor='projects', _id=response['project_id']
+                accessor='projects', _id=sdata['project_id']
             ),
-            _id=response['id'],  # Data fields
-            name=response['title'],
-            description=response['description'],
-            created=response['created_at'],
-            updated=response.get('updated_at')
+            _id=sdata['id'],  # Data fields
+            name=sdata['title'],
+            description=sdata['description'],
+            created=sdata['created_at'],
+            updated=sdata.get('updated_at')
         )
-
-        return result
-
-    def get(self, _id, pids=None, globalid=None):
-
-        response = self.store._processquery(
-            scopes=['projects', 'milestones'], _id=_id, pids=pids
-        )
-
-        result = self._responsetoproject(response=response)
 
         return result
 
@@ -79,13 +70,14 @@ class MilestoneAccessor(Accessor):
         result = []
 
         if pids:
-            response = self._processquery(
+            response = self.store._processquery(
                 scopes=['projects', 'milestones'], pids=pids
             )
-            result = map(self._responsetoproject, response)
+            if response:
+                result = map(self.sdata2data, response)
 
         else:
-            projects = self._processquery(scopes='projects')
+            projects = self.store._processquery(scopes='projects')
             for project in projects:
                 milestones = self.find(pids=project['id'], name=name, **kwargs)
                 result += milestones
@@ -94,26 +86,15 @@ class MilestoneAccessor(Accessor):
 
         return result
 
-    def _add(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        response = self.store._processquery(
-            verb='post', scopes=['projects', 'milestones'],
-            pids=data.pids, title=data.name, description=data.description,
-            due_date=data.duedate
-        )
+        kwargs.update({
+            'title': data.name, 'description': data.description,
+            'due_date': data.duedate
+        })
 
-        result = self._responsetoproject(response)
+    def _fillupdatekwargs(self, data, old, kwargs):
 
-        return result
+        self._filladdkwargs(data=data, kwargs=kwargs)
 
-    def _update(self, data, old):
-
-        response = self.store._processquery(
-            verb='put', scopes=['projects', 'milestones'], _id=data._id,
-            pids=data.pids, title=data.name, description=data.description,
-            due_date=data.duedate, state_event=data.state
-        )
-
-        result = self._responsetoproject(response=response)
-
-        return result
+        kwargs['state_event'] = data.state

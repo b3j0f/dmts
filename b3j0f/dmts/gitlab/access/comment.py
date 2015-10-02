@@ -28,45 +28,36 @@
 
 __all__ = ['CommentAccessor']
 
-from b3j0f.sync import Accessor
+from .base import GitLabAccessor
 
 from ...model.comment import Comment
 
 
-class CommentAccessor(Accessor):
+class CommentAccessor(GitLabAccessor):
     """Comment accessor."""
 
     __datatype__ = Comment
+    __scopes__ = ['projects', 'issues', 'comments']
 
-    def _responsetodata(self, response):
-        """Convert a response to a comment."""
+    def sdata2data(self, sdata):
+        """Convert a sdata to a comment."""
 
         result = self.create(
             project=self.store.get(  # comment fields
-                accessor='projects', _id=response['project_id']
+                accessor='projects', _id=sdata['project_id']
             ),
             issue=self.store.get(
-                accessor='issues', _id=response['issue_id']
+                accessor='issues', _id=sdata['issue_id']
             ),
-            content=response['body'],
-            attachment=response['attachment'],
-            owner=self.store.get(  # element fields
-                accessor='accounts', _id=response['author']['id']
+            content=sdata['body'],
+            attachment=sdata['attachment'],
+            owner=self.store.sdata2data(  # element fields
+                accessor='accounts', sdata=sdata['author']
             ),
-            _id=response['id'],  # Data fields
-            created=response['created_at'],  # TODO: format to a datetime
-            updated=response.get('updated_at')  # TODO: format to a datetime
+            _id=sdata['id'],  # Data fields
+            created=sdata['created_at'],  # TODO: format to a datetime
+            updated=sdata.get('updated_at')  # TODO: format to a datetime
         )
-
-        return result
-
-    def get(self, _id, pids, globalid=None):
-
-        response = self.store._processquery(
-            scopes=['projects', 'issues', 'notes'], _id=_id, pids=pids
-        )
-
-        result = self._responsetodata(response=response)
 
         return result
 
@@ -75,50 +66,34 @@ class CommentAccessor(Accessor):
         result = []
 
         if pids is None:
-            projects = self._processquery(scopes='projects')
+            projects = self.store._processquery(scopes='projects')
             for project in projects:
-                issues = self._processquery(
-                    scopes=['projects', 'issues'], pids=project['id']
-                )
-                comments = self.find(pids=project['id'], **kwargs)
+                comments = self.find(pids=[project['id']], **kwargs)
                 result += comments
 
         elif len(pids) == 1:
-            issues = self._processquery(
-                scopes=['projects', 'issues'], pids=pids[0]
+            issues = self.store._processquery(
+                scopes=['projects', 'issues'], pids=[pids[0]]
             )
             for issue in issues:
                 comments = self.find(pids=[pids[0], issue['id']], **kwargs)
                 result += comments
 
         else:
-            comments = self._processquery(
+            comments = self.store._processquery(
                 scopes=['projects', 'issues', 'notes'], pids=pids
             )
-            result = map(self._responsetodata, result)
+            if comments:
+                result = map(self.sdata2data, result)
 
         # TODO : check kwargs
 
         return result
 
-    def _add(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        response = self.store._processquery(
-            verb='post', scopes=['projects', 'issues', 'notes'],
-            pids=data.pids, body=data.content
-        )
+        kwargs['body'] = data.content
 
-        result = self._responsetodata(response)
+    def _fillupdatekwargs(self, data, old, kwargs):
 
-        return result
-
-    def _update(self, data, old):
-
-        response = self.store._processquery(
-            verb='put', scopes=['projects', 'issues', 'notes'],
-            pids=data.pids, _id=data._id, body=data.content
-        )
-
-        result = self.store._responsetodata(response=response)
-
-        return result
+        self._filladdkwargs(data=data, kwargs=kwargs)

@@ -87,15 +87,13 @@ class AccountAccessor(GitLabAccessor):
 
         return result
 
-    def _addkwargs(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        result = {
+        kwargs.update({
             'email': data.email, 'password': data.pwd, 'username': data.name,
             'name': data.fullname
-        }
+        })
 
-        return result
+    def _fillupdatekwargs(self, data, old, kwargs):
 
-    def _updatekwargs(self, data, old):
-
-        return self._addkwargs(data)
+        self._filladdkwargs(data=data, kwargs=kwargs)

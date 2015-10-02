@@ -28,34 +28,29 @@
 
 __all__ = ['LabelAccessor']
 
-from b3j0f.sync import Accessor
+from .base import GitLabAccessor
 
 from ...model.label import Label
 
 
-class LabelAccessor(Accessor):
+class LabelAccessor(GitLabAccessor):
     """Label accessor."""
 
     __datatype__ = Label
+    __scopes__ = ['projects', 'labels']
 
-    def _responsetoproject(self, response):
-        """Convert a response to a label."""
+    def sdata2data(self, sdata):
+        """Convert a sdata to a label."""
 
-        result = self.create(
-            color=response['color'],  # label fields
-            _id=response['name'],  # Data fields
-            name=response['name'],  # element fields
-        )
+        if isinstance(sdata, dict):
 
-        return result
+            result = self.create(
+                color=sdata['color'],  # label fields
+                _id=sdata['name']  # Data fields
+            )
 
-    def get(self, _id, pids=None, globalid=None):
-
-        response = self.store._processquery(
-            scopes=['projects', 'labels'], _id=_id, pids=pids
-        )
-
-        result = self._responsetoproject(response=response)
+        else:
+            result = self.create(_id=sdata)
 
         return result
 
@@ -71,13 +66,14 @@ class LabelAccessor(Accessor):
         result = []
 
         if pids:
-            response = self._processquery(
-                scopes=['projects', 'labels'], pids=pids
+            sdata = self.store._processquery(
+                scopes=self.__scopes__, pids=pids
             )
-            result = map(self._responsetoproject, response)
+            if sdata:
+                result = map(self.sdata2data, sdata)
 
         else:
-            projects = self._processquery(scopes='projects')
+            projects = self.store._processquery(scopes='projects')
             for project in projects:
                 labels = self.find(pids=project['id'], name=name, **kwargs)
                 result += labels
@@ -86,33 +82,19 @@ class LabelAccessor(Accessor):
 
         return result
 
-    def _add(self, data):
+    def _filladdkwargs(self, data, kwargs):
 
-        response = self.store._processquery(
-            verb='post', scopes=['projects', 'labels'], pids=data.pids,
-            name=data.name, color=data.color
-        )
+        kwargs.update({
+            'name': data.name, 'color': data.color
+        })
 
-        result = self._responsetoproject(response)
+    def _fillupdatekwargs(self, data, old, kwargs):
 
-        return result
+        self._filladdkwargs(data=data, kwargs=kwargs)
 
-    def _update(self, data, old):
+        kwargs['name'] = old.name
+        kwargs['new_name'] = data.name
 
-        response = self.store._processquery(
-            verb='put', scopes=['projects', 'labels'], pids=data.pids,
-            name=data.name, color=data.color, new_name=old.name
-        )
+    def _fillremovekwargs(self, data, kwargs):
 
-        result = self._responsetoproject(response=response)
-
-        return result
-
-    def _remove(self, data):
-
-        self._processquery(
-            verb='delete', scopes=['projects', 'labels'], pids=data.pids,
-            name=data.name,
-        )
-
-        return data
+        kwargs['name'] = data.name

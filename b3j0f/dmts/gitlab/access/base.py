@@ -47,15 +47,30 @@ class GitLabAccessor(Accessor):
         if globalid is not None:
             _id, pids = getidwpids(globalid)
 
+        sdata = None
+
         try:
-            response = self.store._processquery(
+            sdata = self.store._processquery(
                 scopes=self.__scopes__, _id=_id, pids=pids
             )
+
         except HTTPStore.Error:
-            pass
-        else:
-            if response is not None:
-                result = self.sdata2data(response=response)
+            # try a global research
+            if pids is not None:
+                scope = self.__scopes__[-1]
+                try:
+                    sdata = self.store._processquery(scopes=scope)
+                except HTTPStore.Error:
+                    pass
+                else:
+                    if sdata:
+                        for sdata in sdata:
+                            if sdata['id'] == _id:
+                                sdata = sdata
+                                break
+
+        if sdata is not None:
+            result = self.sdata2data(sdata=sdata)
 
         return result
 
@@ -63,11 +78,11 @@ class GitLabAccessor(Accessor):
 
         result = None
 
-        response = self.find(name=name)
+        sdata = self.find(name=name)
 
-        if response:
-            response = first(response)
-            result = self.sdata2data(response=response)
+        if sdata:
+            sdata = first(sdata)
+            result = self.sdata2data(sdata=sdata)
 
         return result
 
@@ -78,46 +93,55 @@ class GitLabAccessor(Accessor):
         if scopes is None:
             scopes = self.__scopes__
 
-        response = self.store._processquery(scopes=scopes, **kwargs)
+        sdata = self.store._processquery(scopes=scopes, **kwargs)
 
-        if response:
-            result = map(self.sdata2data, response)
+        if sdata:
+            result = map(self.sdata2data, sdata)
 
         return result
 
     def _add(self, data):
 
-        kwargs = self._addkwargs(data)
+        kwargs = {'scopes': self.__scopes__, 'pids': data.pids}
 
-        response = self.store._processquery(method=HTTPStore.POST, **kwargs)
+        self._filladdkwargs(data, kwargs)
 
-        result = self.sdata2data(response)
+        sdata = self.store._processquery(method=HTTPStore.POST, **kwargs)
+
+        result = self.sdata2data(sdata=sdata)
 
         return result
 
-    def _addkwargs(data):
-        """Method to override in order to specify self._add kwargs."""
+    def _filladdkwargs(self, data, kwargs):
+        """Method to override in order to update self._add kwargs."""
 
         raise NotImplementedError()
 
     def _update(self, data, old):
 
-        kwargs = self._updatekwargs(data=data, old=old)
+        kwargs = {
+            'scopes': self.__scopes__, '_id': data._id, 'pids': data.pids
+        }
 
-        response = self.store._processquery(method=HTTPStore.PUT, **kwargs)
+        self._fillupdatekwargs(data=data, old=old, kwargs=kwargs)
 
-        result = self.sdata2data(response=response)
+        sdata = self.store._processquery(method=HTTPStore.PUT, **kwargs)
+
+        result = self.sdata2data(sdata=sdata)
 
         return result
 
-    def _updatekwargs(data, old):
+    def _fillupdatekwargs(self, data, old, kwargs):
         """Method to override in order to specify self._update kwargs."""
 
         raise NotImplementedError()
 
     def _remove(self, data):
 
-        kwargs = self._removekwargs(data=data)
+        kwargs = {
+            '_id': data._id, 'pids': data.pids, 'scopes': self.__scopes__
+        }
+        self._fillremovekwargs(data=data, kwargs=kwargs)
 
         result = self.store._processquery(method=HTTPStore.DELETE, **kwargs)
 
@@ -129,13 +153,5 @@ class GitLabAccessor(Accessor):
 
         return data
 
-    def _removekwargs(self, data):
+    def _fillremovekwargs(self, data, kwargs):
         """Method to override in order to specify self._remove kwargs."""
-
-        result = {
-            '_id': data._id,
-            'pids': data.pids,
-            'scopes': self.__scopes__
-        }
-
-        return result
